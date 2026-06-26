@@ -13,6 +13,7 @@ import { Label } from '../components/ui/Label';
 import { RadioGroup, RadioGroupItem } from '../components/ui/RadioGroup';
 import { Skeleton } from '../components/ui/Skeleton';
 import { Textarea } from '../components/ui/Textarea';
+import { useAuth } from '../lib/auth';
 import { supabase } from '../lib/supabase';
 import type { StudentDashboard } from '../lib/types';
 
@@ -24,9 +25,14 @@ interface Feedback {
   version: number;
 }
 
+const dashboardCache = new Map<string, StudentDashboard>();
+
 export function AlumnoView() {
-  const [dashboard, setDashboard] = useState<StudentDashboard | null>(null);
-  const [loading, setLoading] = useState(true);
+  const { profile } = useAuth();
+  const cacheKey = profile?.student_id ?? 'anonymous';
+  const cachedDashboard = dashboardCache.get(cacheKey) ?? null;
+  const [dashboard, setDashboard] = useState<StudentDashboard | null>(cachedDashboard);
+  const [loading, setLoading] = useState(!cachedDashboard);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState('');
   const [freeText, setFreeText] = useState('');
@@ -36,17 +42,48 @@ export function AlumnoView() {
   const [linkCode, setLinkCode] = useState(() => localStorage.getItem('aprendo.studentLinkCode') ?? '');
   const sessionId = useRef(crypto.randomUUID());
   const activeResponseId = useRef<string | null>(null);
+  const pollIntervalRef = useRef<number | null>(null);
+  const pollTimeoutRef = useRef<number | null>(null);
+
+  const clearFeedbackPolling = useCallback(() => {
+    if (pollIntervalRef.current) window.clearInterval(pollIntervalRef.current);
+    if (pollTimeoutRef.current) window.clearTimeout(pollTimeoutRef.current);
+    pollIntervalRef.current = null;
+    pollTimeoutRef.current = null;
+  }, []);
+
+  useEffect(() => {
+    const nextCachedDashboard = dashboardCache.get(cacheKey) ?? null;
+    setDashboard(nextCachedDashboard);
+    setLoading(!nextCachedDashboard);
+    setFeedback(null);
+    activeResponseId.current = null;
+    clearFeedbackPolling();
+  }, [cacheKey, clearFeedbackPolling]);
 
   const loadDashboard = useCallback(async () => {
     setError(null);
     const { data, error: rpcError } = await supabase.rpc('get_student_dashboard');
     if (rpcError) throw rpcError;
-    setDashboard(data as StudentDashboard);
-  }, []);
+    const next = data as StudentDashboard;
+    dashboardCache.set(cacheKey, next);
+    setDashboard(next);
+  }, [cacheKey]);
 
   useEffect(() => {
-    void loadDashboard().catch((loadError) => setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar')).finally(() => setLoading(false));
+    let active = true;
+    if (!dashboardCache.has(cacheKey)) setLoading(true);
+    void loadDashboard()
+      .catch((loadError) => {
+        if (active) setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => { active = false; };
   }, [loadDashboard]);
+
+  useEffect(() => () => clearFeedbackPolling(), [clearFeedbackPolling]);
 
   useEffect(() => {
     if (!dashboard?.studentId) return;
@@ -54,6 +91,7 @@ export function AlumnoView() {
       .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'feedbacks', filter: `student_id=eq.${dashboard.studentId}` }, (payload) => {
         const next = payload.new as Feedback;
         if (!activeResponseId.current || next.response_id !== activeResponseId.current) return;
+        clearFeedbackPolling();
         setFeedback(next);
         setSubmitting(false);
         setReexplaining(false);
@@ -62,15 +100,34 @@ export function AlumnoView() {
     return () => { void supabase.removeChannel(channel); };
   }, [dashboard?.studentId, loadDashboard]);
 
-  async function pollFeedback(responseId: string) {
+  async function pollFeedback(responseId: string): Promise<boolean> {
     const { data } = await supabase.from('feedbacks').select('id,response_id,explanation,used_fallback,version')
       .eq('response_id', responseId).order('version', { ascending: false }).limit(1).maybeSingle();
     if (data) {
+      clearFeedbackPolling();
       setFeedback(data as Feedback);
       setSubmitting(false);
       setReexplaining(false);
       await loadDashboard();
+      return true;
     }
+    return false;
+  }
+
+  function startFeedbackPolling(responseId: string, timeoutMs = 30_000) {
+    clearFeedbackPolling();
+    void pollFeedback(responseId);
+    pollIntervalRef.current = window.setInterval(() => {
+      void pollFeedback(responseId);
+    }, 1_200);
+    pollTimeoutRef.current = window.setTimeout(() => {
+      clearFeedbackPolling();
+      if (activeResponseId.current === responseId) {
+        setSubmitting(false);
+        setReexplaining(false);
+        toast.error('El feedback está tardando más de lo esperado. Puedes intentarlo de nuevo en unos segundos.');
+      }
+    }, timeoutMs);
   }
 
   async function submitAnswer() {
@@ -89,7 +146,7 @@ export function AlumnoView() {
       return;
     }
     activeResponseId.current = data.response_id;
-    window.setTimeout(() => void pollFeedback(data.response_id), 30_000);
+    startFeedbackPolling(data.response_id);
   }
 
   async function reexplain() {
@@ -102,7 +159,7 @@ export function AlumnoView() {
       toast.error(data?.error_code ?? 'No se pudo generar otra explicación');
       return;
     }
-    window.setTimeout(() => void pollFeedback(feedback.response_id), 10_000);
+    startFeedbackPolling(feedback.response_id, 15_000);
   }
 
   async function rotateLinkCode() {
@@ -118,6 +175,7 @@ export function AlumnoView() {
     setFreeText('');
     setFeedback(null);
     activeResponseId.current = null;
+    clearFeedbackPolling();
     void loadDashboard();
   }
 

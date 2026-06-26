@@ -13,6 +13,8 @@ function required(name: string): string {
 
 export async function deepSeekMessage(options: DeepSeekOptions): Promise<string> {
   const baseUrl = required('ANTHROPIC_BASE_URL').replace(/\/$/, '');
+  const timeoutMs = Math.max(2_000, Number(Deno.env.get('DEEPSEEK_TIMEOUT_MS') ?? '5000'));
+  const attempts = Math.max(1, Number(Deno.env.get('DEEPSEEK_MAX_ATTEMPTS') ?? '2'));
   const body = {
     model: required('ANTHROPIC_MODEL'),
     max_tokens: options.maxTokens ?? 500,
@@ -22,10 +24,10 @@ export async function deepSeekMessage(options: DeepSeekOptions): Promise<string>
   };
 
   let lastError: unknown;
-  for (let attempt = 0; attempt < 2; attempt += 1) {
+  for (let attempt = 0; attempt < attempts; attempt += 1) {
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 8_000);
+      const timeout = setTimeout(() => controller.abort(), timeoutMs);
       const response = await fetch(`${baseUrl}/v1/messages`, {
         method: 'POST',
         signal: controller.signal,
@@ -47,7 +49,7 @@ export async function deepSeekMessage(options: DeepSeekOptions): Promise<string>
       return text;
     } catch (error) {
       lastError = error;
-      if (attempt === 0) await new Promise((resolve) => setTimeout(resolve, 250));
+      if (attempt < attempts - 1) await new Promise((resolve) => setTimeout(resolve, 250));
     }
   }
   throw lastError instanceof Error ? lastError : new Error('DEEPSEEK_FAILED');

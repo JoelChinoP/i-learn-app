@@ -1,4 +1,4 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from './supabase';
 import type { Profile } from './types';
@@ -18,6 +18,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const profileRef = useRef<Profile | null>(null);
+
+  useEffect(() => {
+    profileRef.current = profile;
+  }, [profile]);
 
   const loadProfile = useCallback(async (nextSession: Session | null) => {
     if (!nextSession) {
@@ -39,11 +44,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(data.session);
       try { await loadProfile(data.session); } finally { if (mounted) setLoading(false); }
     });
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, nextSession) => {
       setSession(nextSession);
-      setLoading(true);
+      if (!nextSession) {
+        setProfile(null);
+        setLoading(false);
+        return;
+      }
+      const hasCurrentProfile = profileRef.current?.id === nextSession.user.id;
+      if (hasCurrentProfile && (event === 'TOKEN_REFRESHED' || event === 'USER_UPDATED')) {
+        setLoading(false);
+        return;
+      }
+      if (!hasCurrentProfile) setLoading(true);
       window.setTimeout(() => {
-        void loadProfile(nextSession).finally(() => setLoading(false));
+        void loadProfile(nextSession).catch(() => setProfile(null)).finally(() => setLoading(false));
       }, 0);
     });
     return () => {
