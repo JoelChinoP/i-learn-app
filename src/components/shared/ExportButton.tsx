@@ -1,4 +1,3 @@
-import React from 'react';
 import { Download } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '../ui/Button';

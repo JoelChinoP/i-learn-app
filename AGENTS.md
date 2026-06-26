@@ -2,28 +2,36 @@
 
 ## Project Structure & Module Organization
 
-This repository is a Vite-powered React 18 and TypeScript application. Application bootstrapping and routing live in `src/index.tsx` and `src/App.tsx`. Role-specific screens are grouped under `src/pages/alumno`, `src/pages/padre`, and `src/pages/instructor`; reusable feature components live in `src/components/alumno` and `src/components/shared`. Keep low-level controls in `src/components/ui`, shared logic in `src/lib`, and fixture data in `src/data/mock.ts`.
+This repository is a Vite React 18 + TypeScript EdTech demo backed by hosted Supabase. App bootstrap and routing live in `src/index.tsx` and `src/App.tsx`. Role screens are in `src/pages/AlumnoView.tsx`, `src/pages/padre/`, and `src/pages/instructor/`. Reusable UI and feature components live in `src/components/shared`, `src/components/alumno`, and `src/components/ui`; shared client logic and pure helpers live in `src/lib`.
 
-Global styles are in `src/index.css`; Tailwind configuration is in `tailwind.config.js`. The hashed `src/_designSystem/` directory contains generated design-system output. Prefer importing its exports through `src/components/ui` and avoid hand-editing the generated bundle.
+Supabase assets live under `supabase/`: versioned SQL migrations in `supabase/migrations` and Edge Functions in `supabase/functions`. The generated `src/_designSystem/` bundle should not be edited directly; import through wrappers in `src/components/ui`.
 
 ## Build, Test, and Development Commands
 
-- `npm install` installs dependencies (the repository currently has no lockfile).
-- `npm run dev` starts the Vite development server with hot reload.
-- `npm run build` creates the production bundle in `dist/` and catches TypeScript/build failures.
-- `npm run lint` checks JavaScript and TypeScript with ESLint.
-- `npm run preview` serves the built bundle for final local verification.
+- `npm install` installs dependencies from `package-lock.json`.
+- `npm run dev` starts the Vite dev server.
+- `npm run typecheck` runs strict TypeScript checks.
+- `npm test` runs Vitest unit tests.
+- `npm run lint` runs ESLint.
+- `npm run build` creates the production bundle in `dist/`.
+- `npx supabase db reset --local` validates migrations against the local Supabase stack.
 
 Run commands from the repository root.
 
 ## Coding Style & Naming Conventions
 
-Use TypeScript for new application code, two-space indentation, semicolons, single quotes, and ES modules. Follow the strict compiler settings in `tsconfig.json`; do not leave unused imports or parameters. Name React components and their files in PascalCase (`MasteryBadge.tsx`), hooks with a `use` prefix (`usePadreData.ts`), and functions/variables in camelCase. Keep route directories lowercase. Compose styling with Tailwind utilities and reuse theme/design-system tokens rather than introducing one-off CSS values. ESLint is authoritative; no Prettier configuration is present.
+Use TypeScript, two-space indentation, semicolons, single quotes, and ES modules. Component files use PascalCase (`MasteryBar.tsx`), hooks use a `use` prefix (`usePadreData.ts`), and helpers use camelCase. Keep route directories lowercase. Prefer Tailwind utilities and existing design-system wrappers over one-off CSS.
+
+Frontend code must never import service-role credentials or administrative Supabase secrets. Only `VITE_SUPABASE_URL` and `VITE_SUPABASE_PUBLISHABLE_KEY` are browser-safe.
 
 ## Testing Guidelines
 
-No automated test framework or coverage threshold is configured yet. Before submitting changes, run `npm run lint` and `npm run build`, then manually exercise affected routes such as `/alumno`, `/padre`, and `/instructor`. If adding tests, use `*.test.ts` or `*.test.tsx` beside the module and add the chosen runner and script to `package.json` in the same change.
+Place tests beside modules as `*.test.ts` or `*.test.tsx`. Current tests cover role routing, mastery thresholds, and `0..1` to percentage conversion. Before handing off changes, run `npm run typecheck`, `npm test`, `npm run lint`, and `npm run build`.
+
+## Supabase & Security Guidelines
+
+Use migrations for schema changes; do not make ad hoc dashboard edits without backfilling a migration. Sensitive writes must stay in Edge Functions, with RLS enabled on exposed tables. Parent/instructor dashboards must remain aggregate/read-only and must not expose rubrics, expected answers, emails, or free-text responses.
 
 ## Commit & Pull Request Guidelines
 
-Recent history uses concise Conventional Commit-style subjects, for example `feat: add instructor and parent dashboard features`. Continue with prefixes such as `feat:`, `fix:`, `refactor:`, or `docs:` and keep each commit focused. Pull requests should explain behavior changes, list validation performed, link relevant issues, and include screenshots or recordings for UI changes. Call out changes to mock-data assumptions, routes, or generated design-system files.
+Use concise Conventional Commit-style subjects such as `feat: add adaptive feedback flow` or `fix: harden response ingestion`. Pull requests should include behavior summary, validation commands, linked issues, and screenshots for UI changes.

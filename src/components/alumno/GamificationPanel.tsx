@@ -1,4 +1,3 @@
-import React from 'react';
 import { Flame, Zap } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/Card';
 import { Progress } from '../ui/Progress';

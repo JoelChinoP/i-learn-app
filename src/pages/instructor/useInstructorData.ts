@@ -1,20 +1,18 @@
-import { useEffect, useState } from 'react';
-import { MOCK_INSTRUCTOR_ROWS, type InstructorRow } from '../../data/mock';
-
-export type InstructorLoadState = 'loading' | 'empty' | 'ready';
+import { useCallback, useEffect, useState } from 'react';
+import { supabase } from '../../lib/supabase';
+import type { InstructorAnalytics } from '../../lib/types';
 
 export function useInstructorData() {
-  // TODO: reemplazar por datos reales (Supabase, solo lectura, por sección).
-  const [loadState, setLoadState] = useState<InstructorLoadState>('loading');
-  const [rows, setRows] = useState<InstructorRow[]>([]);
-
-  useEffect(() => {
-    const t = setTimeout(() => {
-      setRows(MOCK_INSTRUCTOR_ROWS);
-      setLoadState(MOCK_INSTRUCTOR_ROWS.length ? 'ready' : 'empty');
-    }, 800);
-    return () => clearTimeout(t);
+  const [data, setData] = useState<InstructorAnalytics>({ sections: [], rows: [], trend: [] });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const reload = useCallback(async () => {
+    setLoading(true);
+    const result = await supabase.rpc('get_instructor_analytics');
+    if (result.error) setError(result.error.message);
+    else { setData(result.data as InstructorAnalytics); setError(null); }
+    setLoading(false);
   }, []);
-
-  return { loadState, rows };
+  useEffect(() => { void reload(); }, [reload]);
+  return { data, loading, error, reload };
 }

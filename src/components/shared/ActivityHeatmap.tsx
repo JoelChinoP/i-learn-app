@@ -1,8 +1,7 @@
-import React from 'react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Tooltip, TooltipContent, TooltipTrigger } from '../ui/Tooltip';
-import type { HeatmapDay } from '../../data/mock';
+import type { HeatmapDay } from '../../lib/types';
 function levelClass(count: number): string {
   if (count <= 0) return 'bg-muted';
   if (count <= 1) return 'bg-primary/25';

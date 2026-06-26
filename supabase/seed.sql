@@ -1,0 +1,2 @@
+-- Demo reference data is versioned in 20260626151000_seed_demo.sql so hosted
+-- and local environments remain identical. Runtime users are never seeded.

@@ -15,7 +15,7 @@ function downloadBlob(content: string, filename: string, mime: string) {
 }
 
 /** Exporta un arreglo de objetos a CSV (compatible con Excel). */
-export function exportToCSV<T extends Record<string, unknown>>(
+export function exportToCSV<T extends object>(
 rows: T[],
 filename: string,
 columns?: {key: keyof T;label: string;}[])

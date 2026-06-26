@@ -1,4 +1,3 @@
-import React from 'react';
 import { AlertTriangle, CalendarOff, X } from 'lucide-react';
 import type { SectionAlert } from '../../data/mock';
 interface AlertBannerProps {

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Bell, CircleAlert, TrendingUp, Trophy } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -51,7 +51,7 @@ export function NotificationBell() {
   const unread = items.filter((n) => !n.read).length;
   return (
     <DropdownMenu
-      onOpenChange={(o) =>
+      onOpenChange={(o: boolean) =>
       o &&
       setItems((prev) =>
       prev.map((n) => ({

@@ -1,6 +1,6 @@
-import React from 'react';
 import { motion } from 'framer-motion';
 import { masteryMeta } from '../../lib/mastery';
+import { clampPercent } from '../../lib/scale';
 interface MasteryBarProps {
   topic: string;
   mastery: number;
@@ -20,7 +20,7 @@ export function MasteryBar({
   showLabel = true
 }: MasteryBarProps) {
   const meta = masteryMeta(mastery);
-  const pct = Math.max(0, Math.min(100, mastery));
+  const pct = clampPercent(mastery);
   if (compact) {
     return (
       <div

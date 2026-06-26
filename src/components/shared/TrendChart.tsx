@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import {
   ResponsiveContainer,
   LineChart,
@@ -11,7 +11,7 @@ import {
 'recharts';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import type { MasteryHistoryPoint } from '../../data/mock';
+import type { MasteryHistoryPoint } from '../../lib/types';
 const SERIES_COLORS = [
 'var(--primary)',
 '#0ea5e9',
@@ -38,7 +38,8 @@ export function TrendChart({
       byDate.set(p.date, {
         date: p.date
       });
-      byDate.get(p.date)![p.topic] = p.mastery;
+      const row = byDate.get(p.date);
+      if (row) row[p.topic] = p.mastery;
     }
     const sorted = Array.from(byDate.values()).sort(
       (a, b) =>

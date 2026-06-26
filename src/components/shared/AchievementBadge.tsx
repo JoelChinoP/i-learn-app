@@ -17,6 +17,7 @@ export function AchievementBadge({
 
 }: {achievement: Achievement;}) {
   const earned = !!achievement.earnedAt;
+  const earnedAt = achievement.earnedAt;
   const Icon = earned ? ICONS[achievement.icon] ?? Star : Lock;
   return (
     <div
@@ -31,8 +32,8 @@ export function AchievementBadge({
         {achievement.label}
       </span>
       <span className="text-[10px] text-muted-foreground">
-        {earned ?
-        `Logrado ${format(new Date(achievement.earnedAt!), 'd MMM', {
+        {earnedAt ?
+        `Logrado ${format(new Date(earnedAt), 'd MMM', {
           locale: es
         })}` :
         'Bloqueado'}

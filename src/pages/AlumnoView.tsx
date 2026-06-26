@@ -1,461 +1,148 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Flame,
-  Send,
-  ArrowRight,
-  Loader2,
-  RefreshCw,
-  RotateCcw,
-  Rabbit,
-  Turtle } from
-'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
-import { Button } from '../components/ui/Button';
-import { Textarea } from '../components/ui/Textarea';
-import { RadioGroup, RadioGroupItem } from '../components/ui/RadioGroup';
-import { Label } from '../components/ui/Label';
-import { Skeleton } from '../components/ui/Skeleton';
-import { ProgressRing } from '../components/shared/ProgressRing';
-import { MasteryBar } from '../components/shared/MasteryBar';
+import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react';
+import { Loader2, RefreshCw, RotateCcw, Send, Share2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { ActivityHeatmap } from '../components/shared/ActivityHeatmap';
 import { ChatBubble } from '../components/shared/ChatBubble';
 import { EmptyState } from '../components/shared/EmptyState';
-import { ActivityHeatmap } from '../components/shared/ActivityHeatmap';
-import { AccessibilityControls } from '../components/shared/AccessibilityControls';
-import { MisTemas } from '../components/alumno/MisTemas';
-import { SessionSummaryCard } from '../components/alumno/SessionSummaryCard';
-import { GamificationPanel } from '../components/alumno/GamificationPanel';
-import { Celebration } from '../components/alumno/Celebration';
-import { masteryLevel } from '../lib/mastery';
-import {
-  MOCK_ALUMNO,
-  MOCK_FEEDBACK,
-  MOCK_MASTERY_AFTER_ANSWER,
-  MOCK_SESSION_SUMMARY,
-  MOCK_HEATMAP,
-  type AlumnoViewData,
-  type FeedbackMessage } from
-'../data/mock';
-type LoadState = 'loading' | 'error' | 'empty' | 'ready';
-type AnswerState = 'idle' | 'submitting' | 'answered';
-type Pace = 'rapido' | 'normal' | 'repaso';
-const ALT_EXPLANATION =
-'Te lo cuento de otra manera 👇 Pensá en porciones de pizza: 3/4 son tres porciones de cuatro, ' +
-'y 1/2 es como cortar otra pizza igual en cuatro y tomar dos porciones (2/4). Juntás 3 + 2 = 5 porciones ' +
-'de tamaño 1/4, o sea 5/4. ¡Listo!';
+import { MasteryBar } from '../components/shared/MasteryBar';
+import { ProgressRing } from '../components/shared/ProgressRing';
+import { TrendChart } from '../components/shared/TrendChart';
+import { Button } from '../components/ui/Button';
+import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
+import { Label } from '../components/ui/Label';
+import { RadioGroup, RadioGroupItem } from '../components/ui/RadioGroup';
+import { Skeleton } from '../components/ui/Skeleton';
+import { Textarea } from '../components/ui/Textarea';
+import { supabase } from '../lib/supabase';
+import type { StudentDashboard } from '../lib/types';
+
+interface Feedback {
+  id: string;
+  response_id: string;
+  explanation: string;
+  used_fallback: boolean;
+  version: number;
+}
+
 export function AlumnoView() {
-  // TODO: reemplazar por datos reales (Supabase Realtime, solo lectura).
-  const [loadState, setLoadState] = useState<LoadState>('loading');
-  const [data, setData] = useState<AlumnoViewData | null>(null);
-  const [answerState, setAnswerState] = useState<AnswerState>('idle');
+  const [dashboard, setDashboard] = useState<StudentDashboard | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState('');
   const [freeText, setFreeText] = useState('');
-  const [feedback, setFeedback] = useState<FeedbackMessage | null>(null);
-  const [mastery, setMastery] = useState<
-    {
-      topic: string;
-      mastery: number;
-    }[]>(
-    []);
+  const [submitting, setSubmitting] = useState(false);
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
   const [reexplaining, setReexplaining] = useState(false);
-  const [answeredCount, setAnsweredCount] = useState(0);
-  const [showSummary, setShowSummary] = useState(false);
-  const [pace, setPace] = useState<Pace>('normal');
-  const [celebration, setCelebration] = useState<string | null>(null);
-  const masteryRef = useRef<
-    {
-      topic: string;
-      mastery: number;
-    }[]>(
-    []);
-  useEffect(() => {
-    setLoadState('loading');
-    const t = setTimeout(() => {
-      setData(MOCK_ALUMNO);
-      setMastery(MOCK_ALUMNO.masteryByTopic);
-      masteryRef.current = MOCK_ALUMNO.masteryByTopic;
-      setLoadState(MOCK_ALUMNO.currentQuestion ? 'ready' : 'empty');
-    }, 900);
-    return () => clearTimeout(t);
-  }, []);
-  const question = data?.currentQuestion;
-  const canSubmit =
-  answerState === 'idle' && (
-  question?.type === 'opcion_multiple' ?
-  selected.length > 0 :
-  freeText.trim().length > 0);
-  function applyNewMastery(
-  next: {
-    topic: string;
-    mastery: number;
-  }[])
-  {
-    const crossed = next.find((n) => {
-      const prev = masteryRef.current.find((p) => p.topic === n.topic);
-      return (
-        prev &&
-        masteryLevel(prev.mastery) !== 'high' &&
-        masteryLevel(n.mastery) === 'high');
+  const [linkCode, setLinkCode] = useState(() => localStorage.getItem('aprendo.studentLinkCode') ?? '');
+  const sessionId = useRef(crypto.randomUUID());
+  const activeResponseId = useRef<string | null>(null);
 
-    });
-    setMastery(next);
-    masteryRef.current = next;
-    if (crossed) setCelebration(`¡Dominaste ${crossed.topic}! 🎉`);
-  }
-  function handleSubmit() {
-    if (!canSubmit) return;
-    setAnswerState('submitting');
-    // TODO: reemplazar por envío real + feedback del orquestador.
-    setTimeout(() => {
-      setFeedback(MOCK_FEEDBACK);
-      applyNewMastery(MOCK_MASTERY_AFTER_ANSWER);
-      setAnswerState('answered');
-      setAnsweredCount((c) => c + 1);
-    }, 1600);
-  }
-  // "No entendí, explícamelo de otra forma" → reusa el estado de carga del feedback.
-  function handleReexplain() {
-    setReexplaining(true);
-    setFeedback(null);
-    // TODO: reemplazar por nueva explicación real del orquestador.
-    setTimeout(() => {
-      setFeedback({
-        ...MOCK_FEEDBACK,
-        id: 'fb-alt',
-        explanation: ALT_EXPLANATION
-      });
+  const loadDashboard = useCallback(async () => {
+    setError(null);
+    const { data, error: rpcError } = await supabase.rpc('get_student_dashboard');
+    if (rpcError) throw rpcError;
+    setDashboard(data as StudentDashboard);
+  }, []);
+
+  useEffect(() => {
+    void loadDashboard().catch((loadError) => setError(loadError instanceof Error ? loadError.message : 'No se pudo cargar')).finally(() => setLoading(false));
+  }, [loadDashboard]);
+
+  useEffect(() => {
+    if (!dashboard?.studentId) return;
+    const channel = supabase.channel(`feedback-${dashboard.studentId}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'feedbacks', filter: `student_id=eq.${dashboard.studentId}` }, (payload) => {
+        const next = payload.new as Feedback;
+        if (!activeResponseId.current || next.response_id !== activeResponseId.current) return;
+        setFeedback(next);
+        setSubmitting(false);
+        setReexplaining(false);
+        void loadDashboard();
+      }).subscribe();
+    return () => { void supabase.removeChannel(channel); };
+  }, [dashboard?.studentId, loadDashboard]);
+
+  async function pollFeedback(responseId: string) {
+    const { data } = await supabase.from('feedbacks').select('id,response_id,explanation,used_fallback,version')
+      .eq('response_id', responseId).order('version', { ascending: false }).limit(1).maybeSingle();
+    if (data) {
+      setFeedback(data as Feedback);
+      setSubmitting(false);
       setReexplaining(false);
-    }, 1500);
+      await loadDashboard();
+    }
   }
-  function handleNext() {
+
+  async function submitAnswer() {
+    const question = dashboard?.currentQuestion;
+    if (!question) return;
+    const answer = question.type === 'opcion_multiple' ? selected : freeText;
+    if (!answer.trim()) return;
+    setSubmitting(true);
+    setFeedback(null);
+    const { data, error: invokeError } = await supabase.functions.invoke('ingest-response', {
+      body: { question_id: question.id, session_id: sessionId.current, raw_answer: answer },
+    });
+    if (invokeError || data?.status !== 'accepted') {
+      setSubmitting(false);
+      toast.error(data?.error_code === 'CONSENT_REQUIRED' ? 'Tu tutor debe dar consentimiento antes de responder.' : data?.error_code ?? invokeError?.message ?? 'No se pudo enviar');
+      return;
+    }
+    activeResponseId.current = data.response_id;
+    window.setTimeout(() => void pollFeedback(data.response_id), 30_000);
+  }
+
+  async function reexplain() {
+    if (!feedback) return;
+    activeResponseId.current = feedback.response_id;
+    setReexplaining(true);
+    const { data, error: invokeError } = await supabase.functions.invoke('reexplain-response', { body: { response_id: feedback.response_id } });
+    if (invokeError || data?.status !== 'accepted') {
+      setReexplaining(false);
+      toast.error(data?.error_code ?? 'No se pudo generar otra explicación');
+      return;
+    }
+    window.setTimeout(() => void pollFeedback(feedback.response_id), 10_000);
+  }
+
+  async function rotateLinkCode() {
+    const { data, error: invokeError } = await supabase.functions.invoke('rotate-link-code', { body: {} });
+    if (invokeError || !data?.student_link_code) return toast.error('No se pudo generar el código');
+    localStorage.setItem('aprendo.studentLinkCode', data.student_link_code);
+    setLinkCode(data.student_link_code);
+    toast.success('Código renovado por 7 días');
+  }
+
+  function nextQuestion() {
     setSelected('');
     setFreeText('');
     setFeedback(null);
-    setAnswerState('idle');
-    if (answeredCount % 3 === 0 && answeredCount > 0) setShowSummary(true);
+    activeResponseId.current = null;
+    void loadDashboard();
   }
-  function handlePractice() {
-    setShowSummary(false);
-    handleNext();
-    document.getElementById('pregunta-actual')?.scrollIntoView({
-      behavior: 'smooth',
-      block: 'start'
-    });
-  }
-  const overall = mastery.length ?
-  Math.round(mastery.reduce((s, m) => s + m.mastery, 0) / mastery.length) :
-  0;
-  return (
-    <main className="mx-auto w-full max-w-2xl px-4 py-6 sm:py-8">
-      <Celebration trigger={celebration} onDone={() => setCelebration(null)} />
 
-      {/* Header */}
-      <section className="mb-6">
-        {loadState === 'loading' ?
-        <div className="flex items-center gap-4">
-            <Skeleton className="size-[72px] rounded-full" />
-            <div className="flex-1 space-y-2">
-              <Skeleton className="h-6 w-40" />
-              <Skeleton className="h-4 w-56" />
-            </div>
-          </div> :
+  if (loading) return <StudentSkeleton />;
+  if (error) return <main className="mx-auto max-w-2xl p-6"><EmptyState title="No pudimos cargar tu actividad" description={error} action={<Button onClick={() => window.location.reload()}><RefreshCw className="size-4" />Reintentar</Button>} /></main>;
+  if (!dashboard) return null;
+  const overall = dashboard.masteryByTopic.length ? Math.round(dashboard.masteryByTopic.reduce((sum, item) => sum + item.mastery, 0) / dashboard.masteryByTopic.length) : 0;
+  const question = dashboard.currentQuestion;
 
-        <div className="flex flex-wrap items-center gap-4">
-            <ProgressRing
-            value={overall}
-            label={`Progreso general ${overall} por ciento`} />
-          
-            <div className="min-w-0 flex-1">
-              <h1 className="text-2xl font-bold tracking-tight text-foreground">
-                ¡Hola, {data?.studentName}! 👋
-              </h1>
-              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
-                <span>Vas por buen camino, ¡sigue así!</span>
-                {!!data?.streakDays &&
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-400">
-                    <Flame className="size-3.5" aria-hidden="true" />
-                    {data.streakDays} días seguidos
-                  </span>
-              }
-              </div>
-            </div>
-            <AccessibilityControls />
-          </div>
-        }
-      </section>
+  return <main className="mx-auto w-full max-w-3xl space-y-6 px-4 py-6 sm:py-8">
+    <section className="flex flex-wrap items-center gap-4"><ProgressRing value={overall} label={`Progreso general ${overall} por ciento`} /><div><h1 className="text-2xl font-bold">¡Hola, {dashboard.studentName}!</h1><p className="text-sm text-muted-foreground">{dashboard.streakDays} día(s) de actividad esta semana · {dashboard.answeredCount} respuestas</p></div></section>
 
-      {loadState === 'error' &&
-      <EmptyState
-        title="No pudimos cargar tu actividad"
-        description="Esto suele resolverse solo. Volvé a intentarlo en un momento."
-        action={
-        <Button onClick={() => window.location.reload()}>
-              <RefreshCw className="size-4" /> Reintentar
-            </Button>
-        } />
+    {!dashboard.consentSigned && <Card className="rounded-2xl border-amber-300"><CardHeader><CardTitle className="text-base">Falta el consentimiento de tu tutor</CardTitle></CardHeader><CardContent className="space-y-3"><p className="text-sm text-muted-foreground">Comparte este código con tu padre o tutor. Caduca a los 7 días y se usa una sola vez.</p>{linkCode && <div className="flex items-center gap-2"><code className="rounded-lg bg-muted px-4 py-2 text-lg font-bold tracking-widest">{linkCode}</code><Share2 className="size-4" /></div>}<Button variant="outline" onClick={() => void rotateLinkCode()}><RotateCcw className="size-4" />{linkCode ? 'Renovar código' : 'Generar código'}</Button></CardContent></Card>}
 
-      }
+    {dashboard.consentSigned && question ? <Card className="rounded-2xl"><CardHeader><p className="text-xs font-medium uppercase tracking-wide text-primary">{question.topic} · dificultad {question.difficultyLevel}</p><CardTitle className="text-lg">{question.text}</CardTitle></CardHeader><CardContent className="space-y-5">
+      {question.type === 'opcion_multiple' ? <RadioGroup value={selected} onValueChange={setSelected} disabled={submitting || Boolean(feedback)} className="gap-2">{question.options?.map((option, index) => <Label key={option} htmlFor={`option-${index}`} className="flex cursor-pointer items-center gap-3 rounded-xl border p-3"><RadioGroupItem id={`option-${index}`} value={option} /><span>{option}</span></Label>)}</RadioGroup> : <Textarea value={freeText} onChange={(event: ChangeEvent<HTMLTextAreaElement>) => setFreeText(event.target.value)} disabled={submitting || Boolean(feedback)} rows={4} placeholder="Escribe tu respuesta…" />}
+      {!feedback && <Button className="w-full" size="lg" disabled={submitting || !(question.type === 'opcion_multiple' ? selected : freeText.trim())} onClick={() => void submitAnswer()}>{submitting ? <><Loader2 className="size-4 animate-spin" />Preparando feedback…</> : <><Send className="size-4" />Enviar respuesta</>}</Button>}
+      {feedback && <div className="space-y-3"><ChatBubble fallback={feedback.used_fallback}>{feedback.explanation}</ChatBubble><div className="flex flex-wrap gap-2"><Button onClick={nextQuestion}>Siguiente pregunta</Button><Button variant="outline" disabled={reexplaining} onClick={() => void reexplain()}>{reexplaining && <Loader2 className="size-4 animate-spin" />}Explícamelo de otra forma</Button></div></div>}
+    </CardContent></Card> : dashboard.consentSigned ? <EmptyState title="Completaste las actividades disponibles" description="Puedes repasar el catálogo desde el inicio." action={<Button onClick={() => void loadDashboard()}>Repasar</Button>} /> : null}
 
-      {loadState === 'empty' &&
-      <EmptyState
-        illustration={<CalmIllustration />}
-        title="Tu instructor todavía no asignó actividades"
-        description="En cuanto haya algo para practicar, aparecerá aquí. ¡Volvé pronto!" />
-
-      }
-
-      {loadState === 'loading' &&
-      <Card className="rounded-2xl">
-          <CardContent className="space-y-4 p-6">
-            <Skeleton className="h-4 w-24" />
-            <Skeleton className="h-6 w-3/4" />
-            <div className="space-y-2 pt-2">
-              {[0, 1, 2, 3].map((i) =>
-            <Skeleton key={i} className="h-11 w-full rounded-xl" />
-            )}
-            </div>
-            <Skeleton className="h-10 w-full rounded-xl" />
-          </CardContent>
-        </Card>
-      }
-
-      {loadState === 'ready' && question &&
-      <div className="space-y-6">
-          <AnimatePresence>
-            {showSummary &&
-          <SessionSummaryCard
-            summary={{
-              ...MOCK_SESSION_SUMMARY,
-              questionsAnswered: answeredCount
-            }}
-            onContinue={() => setShowSummary(false)}
-            onFinish={() => setShowSummary(false)} />
-
-          }
-          </AnimatePresence>
-
-          {!showSummary &&
-        <>
-              <Card id="pregunta-actual" className="rounded-2xl">
-                <CardHeader className="pb-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-medium uppercase tracking-wide text-primary">
-                      Pregunta actual
-                    </span>
-                    <PaceSelector pace={pace} onChange={setPace} />
-                  </div>
-                  <CardTitle className="text-lg leading-snug">
-                    {question.text}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-5">
-                  {question.type === 'opcion_multiple' ?
-              <RadioGroup
-                value={selected}
-                onValueChange={setSelected}
-                disabled={answerState !== 'idle'}
-                className="gap-2.5">
-                
-                      {question.options?.map((opt, i) => {
-                  const id = `opt-${i}`;
-                  const active = selected === opt;
-                  return (
-                    <Label
-                      key={id}
-                      htmlFor={id}
-                      className={`flex cursor-pointer items-center gap-3 rounded-xl border px-4 py-3 text-sm transition-colors ${active ? 'border-primary bg-primary/5 ring-1 ring-primary' : 'border-border hover:bg-accent'} ${answerState !== 'idle' ? 'opacity-70' : ''}`}>
-                      
-                            <RadioGroupItem id={id} value={opt} />
-                            <span className="font-medium text-foreground">
-                              {opt}
-                            </span>
-                          </Label>);
-
-                })}
-                    </RadioGroup> :
-
-              <Textarea
-                placeholder="Escribí tu respuesta aquí…"
-                value={freeText}
-                onChange={(e) => setFreeText(e.target.value)}
-                disabled={answerState !== 'idle'}
-                rows={4} />
-
-              }
-
-                  <Button
-                className="w-full"
-                size="lg"
-                onClick={handleSubmit}
-                disabled={!canSubmit}
-                aria-busy={answerState === 'submitting'}>
-                
-                    {answerState === 'submitting' ?
-                <>
-                        <Loader2 className="size-4 animate-spin" /> Enviando…
-                      </> :
-
-                <>
-                        <Send className="size-4" /> Enviar respuesta
-                      </>
-                }
-                  </Button>
-                </CardContent>
-              </Card>
-
-              <AnimatePresence mode="wait">
-                {(answerState === 'submitting' || reexplaining) &&
-            <motion.div
-              key="fb-loading"
-              initial={{
-                opacity: 0
-              }}
-              animate={{
-                opacity: 1
-              }}
-              exit={{
-                opacity: 0
-              }}>
-              
-                    <div className="flex items-start gap-3">
-                      <Skeleton className="size-9 shrink-0 rounded-full" />
-                      <div className="flex-1 space-y-2">
-                        <p className="text-xs font-medium text-muted-foreground">
-                          {reexplaining ?
-                    'Buscando otra forma de explicarlo…' :
-                    'Preparando tu feedback…'}
-                        </p>
-                        <Skeleton className="h-4 w-full rounded-lg" />
-                        <Skeleton className="h-4 w-5/6 rounded-lg" />
-                        <Skeleton className="h-4 w-2/3 rounded-lg" />
-                      </div>
-                    </div>
-                  </motion.div>
-            }
-
-                {answerState === 'answered' && feedback && !reexplaining &&
-            <motion.div key={feedback.id} className="space-y-3">
-                    <ChatBubble fallback={feedback.usedFallback}>
-                      {feedback.explanation}
-                    </ChatBubble>
-                    <div className="flex flex-col gap-2 sm:flex-row">
-                      <Button
-                  variant="ghost"
-                  size="sm"
-                  className="sm:flex-1"
-                  onClick={handleReexplain}>
-                  
-                        <RotateCcw className="size-4" /> No entendí, explícamelo
-                        de otra forma
-                      </Button>
-                      <Button
-                  variant="outline"
-                  size="sm"
-                  className="sm:flex-1"
-                  onClick={handleNext}>
-                  
-                        Siguiente pregunta <ArrowRight className="size-4" />
-                      </Button>
-                    </div>
-                  </motion.div>
-            }
-              </AnimatePresence>
-            </>
-        }
-
-          {/* Dominio por tema */}
-          <Card className="rounded-2xl">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Tu dominio por tema</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              {mastery.map((m) =>
-            <MasteryBar key={m.topic} topic={m.topic} mastery={m.mastery} />
-            )}
-            </CardContent>
-          </Card>
-
-          <MisTemas onPractice={handlePractice} />
-
-          <GamificationPanel streakDays={data?.streakDays ?? 0} />
-
-          <Card className="rounded-2xl">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">
-                Tu actividad de los últimos 30 días
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ActivityHeatmap days={MOCK_HEATMAP} />
-            </CardContent>
-          </Card>
-        </div>
-      }
-    </main>);
-
+    <div className="grid gap-6 md:grid-cols-2"><Card className="rounded-2xl"><CardHeader><CardTitle className="text-base">Dominio por tema</CardTitle></CardHeader><CardContent className="space-y-4">{dashboard.masteryByTopic.map((item) => <MasteryBar key={item.topic} topic={item.topic} mastery={item.mastery} />)}</CardContent></Card><Card className="rounded-2xl"><CardHeader><CardTitle className="text-base">Actividad reciente</CardTitle></CardHeader><CardContent><ActivityHeatmap days={dashboard.activity} /></CardContent></Card></div>
+    {dashboard.history.length > 0 && <Card className="rounded-2xl"><CardHeader><CardTitle className="text-base">Progreso</CardTitle></CardHeader><CardContent><TrendChart data={dashboard.history} /></CardContent></Card>}
+  </main>;
 }
-function PaceSelector({
-  pace,
-  onChange
 
-
-
-}: {pace: Pace;onChange: (p: Pace) => void;}) {
-  const opts: {
-    value: Pace;
-    label: string;
-    icon: React.ElementType;
-  }[] = [
-  {
-    value: 'repaso',
-    label: 'Repasar más',
-    icon: Turtle
-  },
-  {
-    value: 'normal',
-    label: 'Normal',
-    icon: ArrowRight
-  },
-  {
-    value: 'rapido',
-    label: 'Más rápido',
-    icon: Rabbit
-  }];
-
-  return (
-    <div
-      className="flex items-center gap-0.5 rounded-full bg-muted p-0.5"
-      role="group"
-      aria-label="Ritmo de práctica">
-      
-      {opts.map(({ value, label, icon: Icon }) =>
-      <button
-        key={value}
-        type="button"
-        onClick={() => onChange(value)}
-        aria-pressed={pace === value}
-        title={label}
-        className={`flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring ${pace === value ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}>
-        
-          <Icon className="size-3.5" aria-hidden="true" />
-          <span className="hidden sm:inline">{label}</span>
-        </button>
-      )}
-    </div>);
-
-}
-function CalmIllustration() {
-  return (
-    <svg viewBox="0 0 48 48" className="size-9" fill="none" aria-hidden="true">
-      <circle cx="24" cy="24" r="16" stroke="currentColor" strokeWidth="2.5" />
-      <path
-        d="M18 26c2 2.5 10 2.5 12 0"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round" />
-      
-      <circle cx="19" cy="20" r="1.6" fill="currentColor" />
-      <circle cx="29" cy="20" r="1.6" fill="currentColor" />
-    </svg>);
-
+function StudentSkeleton() {
+  return <main className="mx-auto max-w-3xl space-y-6 p-6"><Skeleton className="h-20 rounded-2xl" /><Skeleton className="h-72 rounded-2xl" /><Skeleton className="h-48 rounded-2xl" /></main>;
 }

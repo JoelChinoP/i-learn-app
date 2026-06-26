@@ -3,7 +3,7 @@ import { motion } from 'framer-motion';
 import { CheckCircle2, Clock, ListChecks } from 'lucide-react';
 import { Card, CardContent } from '../ui/Card';
 import { Button } from '../ui/Button';
-import type { SessionSummary } from '../../data/mock';
+import type { SessionSummary } from '../../lib/types';
 interface SessionSummaryCardProps {
   summary: SessionSummary;
   onContinue: () => void;

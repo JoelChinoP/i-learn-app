@@ -1,4 +1,3 @@
-import React from 'react';
 import { Accessibility } from 'lucide-react';
 import { useTheme } from '../../lib/theme';
 import { Popover, PopoverContent, PopoverTrigger } from '../ui/Popover';
