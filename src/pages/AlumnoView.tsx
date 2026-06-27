@@ -749,6 +749,7 @@ export function AlumnoView() {
           required={!setup}
           onClose={() => setShowSetup(false)}
           onComplete={(value) => {
+            setLoading(true);
             setSetup(value);
             setShowSetup(false);
             setEvalStats({ answered: 0, correct: 0 });
