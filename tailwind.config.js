@@ -47,8 +47,29 @@ export default {content: [
         'destructive-foreground': 'var(--destructive-foreground)'
       },
       fontFamily: {
-        heading: ['Geist'],
-        mono: ['"Geist Mono"']
+        heading: ['"Bebas Neue"', 'system-ui', 'sans-serif'],
+        display: ['"Bebas Neue"', 'system-ui', 'sans-serif'],
+        sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+        mono: ['"Geist Mono"', 'monospace']
+      },
+      keyframes: {
+        'loop-neon-pulse': {
+          '0%,100%': { boxShadow: '0 0 10px #9CFF0F88, 0 0 28px #9CFF0F33' },
+          '50%': { boxShadow: '0 0 22px #9CFF0Fcc, 0 0 56px #9CFF0F66' }
+        },
+        'loop-fade-up': {
+          from: { opacity: 0, transform: 'translateY(10px)' },
+          to: { opacity: 1, transform: 'translateY(0)' }
+        },
+        'loop-dot-blink': {
+          '0%,80%,100%': { opacity: 0.15 },
+          '40%': { opacity: 1 }
+        }
+      },
+      animation: {
+        'loop-neon-pulse': 'loop-neon-pulse 2s ease infinite',
+        'loop-fade-up': 'loop-fade-up 0.4s ease both',
+        'loop-dot-blink': 'loop-dot-blink 1.3s ease infinite'
       }
     }
   }

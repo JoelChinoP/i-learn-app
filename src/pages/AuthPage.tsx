@@ -1,6 +1,7 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { Navigate } from 'react-router-dom';
-import { GraduationCap, Loader2 } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
+import { LoopMascot } from '../components/shared/LoopMascot';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
@@ -50,13 +51,27 @@ export function AuthPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-muted/40 px-4 py-10">
-      <Card className="w-full max-w-md rounded-2xl">
+    <main
+      className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10"
+      style={{
+        background:
+          'radial-gradient(60% 60% at 50% 20%, rgba(77,52,182,0.35) 0%, rgba(0,0,0,0) 60%), radial-gradient(40% 40% at 80% 90%, rgba(156,255,15,0.10) 0%, rgba(0,0,0,0) 65%), #000',
+      }}
+    >
+      <Card className="loop-fade-up w-full max-w-md rounded-2xl border border-[#56358C] bg-[#162E84]/85 backdrop-blur">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-2 flex size-11 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <GraduationCap className="size-6" />
+          <div className="mx-auto mb-3 loop-neon-pulse rounded-full">
+            <LoopMascot size={64} mood="idle" />
           </div>
-          <CardTitle>{mode === 'login' ? 'Ingresar a Aprendo' : 'Crear cuenta'}</CardTitle>
+          <div className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#9CFF0F]">
+            Loop · aprende en bucle
+          </div>
+          <CardTitle
+            className="mt-2 text-3xl tracking-[0.12em] text-white"
+            style={{ fontFamily: '"Bebas Neue", sans-serif' }}
+          >
+            {mode === 'login' ? 'INGRESAR' : 'CREAR CUENTA'}
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <form className="space-y-4" onSubmit={submit}>
@@ -82,7 +97,7 @@ export function AuthPage() {
           <button type="button" className="mt-5 w-full text-sm text-primary hover:underline" onClick={() => setMode((value) => value === 'login' ? 'register' : 'login')}>
             {mode === 'login' ? '¿No tienes cuenta? Regístrate' : 'Ya tengo una cuenta'}
           </button>
-          <p className="mt-4 text-center text-xs text-muted-foreground">Demo local: las cuentas se confirman automáticamente y no existe recuperación por correo.</p>
+          <p className="mt-4 text-center text-xs text-white/45">Demo local: las cuentas se confirman automáticamente y no existe recuperación por correo.</p>
         </CardContent>
       </Card>
     </main>

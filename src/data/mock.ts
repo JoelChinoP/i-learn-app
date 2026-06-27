@@ -313,26 +313,15 @@ export const MOCK_ALUMNO_TOPICS: {
 
 
 export const MOCK_ACHIEVEMENTS: Achievement[] = [
-{
-  id: 'a1',
-  label: 'Dominaste Porcentajes',
-  earnedAt: isoDaysAgo(2),
-  icon: 'trophy'
-},
-{
-  id: 'a2',
-  label: 'Racha de 7 días',
-  earnedAt: isoDaysAgo(0),
-  icon: 'flame'
-},
-{
-  id: 'a3',
-  label: 'Primeras 50 preguntas',
-  earnedAt: isoDaysAgo(9),
-  icon: 'target'
-},
-{ id: 'a4', label: 'Domina Fracciones', earnedAt: null, icon: 'star' },
-{ id: 'a5', label: 'Racha de 30 días', earnedAt: null, icon: 'medal' }];
+  { id: 'a1', label: 'Porcentajes a flote', earnedAt: isoDaysAgo(2), icon: 'trophy' },
+  { id: 'a2', label: 'Racha de 7 días', earnedAt: isoDaysAgo(0), icon: 'flame' },
+  { id: 'a3', label: 'Primeras 50 preguntas', earnedAt: isoDaysAgo(9), icon: 'target' },
+  { id: 'a4', label: 'Explicador de oro', earnedAt: isoDaysAgo(4), icon: 'star' },
+  { id: 'a5', label: 'Madrugador adaptativo', earnedAt: isoDaysAgo(11), icon: 'medal' },
+  { id: 'a6', label: 'Fracciones domadas', earnedAt: null, icon: 'star' },
+  { id: 'a7', label: 'Racha de 30 días', earnedAt: null, icon: 'medal' },
+  { id: 'a8', label: 'Sin pistas: 10 evaluaciones seguidas', earnedAt: null, icon: 'target' },
+  { id: 'a9', label: 'Primer audio explicador', earnedAt: null, icon: 'trophy' }];
 
 
 export const MOCK_XP = { level: 5, current: 740, nextLevel: 1000 };

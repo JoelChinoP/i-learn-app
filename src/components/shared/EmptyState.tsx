@@ -1,4 +1,5 @@
 import React from 'react';
+import { LoopMascot } from './LoopMascot';
 interface EmptyStateProps {
   /** Ilustración simple (SVG) a renderizar dentro del círculo. */
   illustration?: React.ReactNode;
@@ -19,39 +20,16 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <div
-      className={`flex flex-col items-center justify-center rounded-xl border border-dashed border-border bg-card px-6 py-12 text-center ${className}`}>
-      
-      <div className="mb-4 flex size-20 items-center justify-center rounded-full bg-primary/10 text-primary">
-        {illustration ?? <DefaultIllustration />}
+      className={`flex flex-col items-center justify-center rounded-2xl border border-dashed border-[#56358C] bg-[#162E84]/20 px-6 py-12 text-center ${className}`}>
+      <div className="mb-4 flex items-center justify-center">
+        {illustration ?? <LoopMascot mood="idle" size={72} />}
       </div>
-      <h3 className="text-base font-semibold text-foreground">{title}</h3>
+      <h3 className="text-base font-semibold text-white">{title}</h3>
       {description &&
-      <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+        <p className="mt-1 max-w-sm text-sm text-white/55">
           {description}
         </p>
       }
       {action && <div className="mt-5">{action}</div>}
     </div>);
-
-}
-function DefaultIllustration() {
-  return (
-    <svg viewBox="0 0 48 48" className="size-9" fill="none" aria-hidden="true">
-      <rect
-        x="9"
-        y="12"
-        width="30"
-        height="24"
-        rx="3"
-        stroke="currentColor"
-        strokeWidth="2.5" />
-      
-      <path
-        d="M16 22h16M16 28h10"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round" />
-      
-    </svg>);
-
 }
