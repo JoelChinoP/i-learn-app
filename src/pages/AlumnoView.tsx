@@ -4,9 +4,9 @@ import { RefreshCw, RotateCcw, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { EmptyState } from '../components/shared/EmptyState';
 import { LoopLoader, LoopMascot } from '../components/shared/LoopMascot';
-import { GamificationPanel } from '../components/alumno/GamificationPanel';
 import { AchievementsShowcase } from '../components/alumno/AchievementsShowcase';
 import { AnalyticsShowcase } from '../components/alumno/AnalyticsShowcase';
+import { ProgressFooter } from '../components/alumno/ProgressFooter';
 import { AudioRecorder } from '../components/alumno/AudioRecorder';
 import { SessionSetup, type SessionSetupValue } from '../components/alumno/SessionSetup';
 import { DailyMissionsCard } from '../components/alumno/DailyMissionsCard';
@@ -311,7 +311,7 @@ export function AlumnoView() {
       : freeText.trim().length > 0;
 
   return (
-    <main className="mx-auto w-full max-w-[1280px] px-4 pb-14 pt-5 sm:px-6">
+    <main className="mx-auto w-full max-w-[1280px] px-4 pb-24 pt-5 sm:px-6">
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         <section className="mx-auto flex w-full max-w-[560px] flex-col gap-4 lg:mx-0 lg:max-w-none">
 
@@ -704,7 +704,8 @@ export function AlumnoView() {
         </section>
 
         {/* SIDE RAIL — desktop side panel, mobile stacks below.
-            Order: missions (action) → leaderboard (social) → XP/streak (progress) → colapsables. */}
+            XP/streak moved to a sticky footer (ProgressFooter) so it stays visible
+            without scrolling. Side rail keeps: missions → leaderboard → colapsables. */}
         <aside className="flex flex-col gap-2.5 lg:sticky lg:top-20 lg:self-start">
           <DailyMissionsCard
             daily={dashboard.missions.daily}
@@ -721,13 +722,6 @@ export function AlumnoView() {
             onOptInChange={setLeaderboardOptIn}
           />
 
-          <GamificationPanel
-            dashboard={{
-              xp: dashboard.xp,
-              streakDays: dashboard.streakDays,
-            }}
-          />
-
           <AchievementsShowcase
             earned={dashboard.achievements.earned}
             locked={dashboard.achievements.locked}
@@ -740,7 +734,7 @@ export function AlumnoView() {
           />
 
           <div className="pt-1 text-center text-[10px] uppercase tracking-[0.32em] text-white/25">
-            {dashboard.streakDays} día(s) activo · {dashboard.answeredCount} respuestas
+            {dashboard.answeredCount} respuestas registradas
           </div>
         </aside>
       </div>
@@ -762,6 +756,14 @@ export function AlumnoView() {
       <Celebration
         trigger={missionCelebration ? `¡Misión completada! ${missionCelebration}` : null}
         onDone={() => setMissionCelebration(null)}
+      />
+
+      <ProgressFooter
+        xp={dashboard.xp}
+        streakDays={dashboard.streakDays}
+        recentXp={dashboard.achievements.recent_xp}
+        studentName={dashboard.studentName}
+        onOpenSetup={() => setShowSetup(true)}
       />
     </main>
   );
