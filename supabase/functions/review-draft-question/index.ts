@@ -6,7 +6,7 @@
 //   - Marca el borrador como `approved` y guarda `created_question_id`.
 
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
-import { errorCode, json } from '../_shared/http.ts';
+import { errorCode, handleOptions, json } from '../_shared/http.ts';
 import { requireUser, serviceClient } from '../_shared/supabase.ts';
 
 interface ReviewRequest {
@@ -25,6 +25,8 @@ interface ReviewRequest {
 }
 
 Deno.serve(async (req) => {
+  const preflight = handleOptions(req);
+  if (preflight) return preflight;
   try {
     const { user } = await requireUser(req, 'instructor');
     const admin = serviceClient();

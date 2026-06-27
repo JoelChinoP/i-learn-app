@@ -15,7 +15,7 @@
 // humana (ver `review-draft-question`).
 
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
-import { errorCode, json } from '../_shared/http.ts';
+import { errorCode, handleOptions, json } from '../_shared/http.ts';
 import { llmMessage, type LlmProvider } from '../_shared/llm.ts';
 import { parseJsonFromModel } from '../_shared/draftValidation.ts';
 import { requireUser, serviceClient } from '../_shared/supabase.ts';
@@ -165,6 +165,8 @@ function validateAndNormalize(item: LlmQuestionDraft): ValidatedDraft | { error:
 }
 
 Deno.serve(async (req) => {
+  const preflight = handleOptions(req);
+  if (preflight) return preflight;
   try {
     const { user } = await requireUser(req, 'instructor');
     const admin = serviceClient();
