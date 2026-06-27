@@ -1,7 +1,8 @@
 import { useMemo, useState, type ChangeEvent } from 'react';
 import { formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { Sparkles } from 'lucide-react';
 import { EmptyState } from '../../components/shared/EmptyState';
 import { ExportButton } from '../../components/shared/ExportButton';
 import { MasteryBar } from '../../components/shared/MasteryBar';
@@ -20,7 +21,7 @@ export function InstructorDashboard() {
   const navigate = useNavigate();
   const rows = useMemo(() => data.rows.filter((row) => `${row.studentAlias} ${row.topic}`.toLowerCase().includes(search.toLowerCase())).sort((a, b) => a.mastery - b.mastery), [data.rows, search]);
   const trend = data.trend.map((point) => ({ date: point.week, topic: 'Promedio', mastery: point.average }));
-  return <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8"><PageHeader title="Panel de la sección" description={data.sections.map((section) => section.name).join(', ') || 'Analítica agregada de solo lectura'} breadcrumbs={[{ label: 'Instructor' }, { label: 'Panel' }]} actions={rows.length ? <ExportButton label="Exportar CSV" onExport={() => exportToCSV(rows, 'seccion-alumnos.csv', [{ key: 'studentAlias', label: 'Alumno' }, { key: 'topic', label: 'Tema' }, { key: 'mastery', label: 'Dominio' }, { key: 'lastActivity', label: 'Última actividad' }])} /> : undefined} />
+  return <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8"><PageHeader title="Panel de la sección" description={data.sections.map((section) => section.name).join(', ') || 'Analítica agregada de solo lectura'} breadcrumbs={[{ label: 'Instructor' }, { label: 'Panel' }]} actions={<div className="flex flex-wrap items-center gap-2">{rows.length ? <ExportButton label="Exportar CSV" onExport={() => exportToCSV(rows, 'seccion-alumnos.csv', [{ key: 'studentAlias', label: 'Alumno' }, { key: 'topic', label: 'Tema' }, { key: 'mastery', label: 'Dominio' }, { key: 'lastActivity', label: 'Última actividad' }])} /> : undefined}<Link to="/instructor/contenido" className="inline-flex h-9 items-center gap-1.5 rounded-md border px-3 text-sm font-medium hover:bg-muted"><Sparkles className="size-3.5" />Contenido + IA</Link></div>} />
     {loading && <div className="space-y-4"><Skeleton className="h-48 rounded-2xl" /><Skeleton className="h-72 rounded-2xl" /></div>}
     {error && <EmptyState title="No pudimos cargar la sección" description={error} />}
     {!loading && !error && data.rows.length === 0 && <EmptyState title="No hay alumnos en la sección" description="Los alumnos aparecerán cuando se registren con el código de clase." />}

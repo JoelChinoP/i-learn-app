@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { BarChart3, LayoutDashboard, LineChart, Settings } from 'lucide-react';
+import { BarChart3, LayoutDashboard, LineChart, Settings, Sparkles } from 'lucide-react';
 import { AuthProvider, rolePath, useAuth } from './lib/auth';
 import type { Role } from './lib/types';
 import { ThemeProvider, useTheme } from './lib/theme';
@@ -16,6 +16,7 @@ import { PadreDetalle } from './pages/padre/PadreDetalle';
 import { PadreConfig } from './pages/padre/PadreConfig';
 import { InstructorDashboard } from './pages/instructor/InstructorDashboard';
 import { InstructorAlumno } from './pages/instructor/InstructorAlumno';
+import { InstructorContenido } from './pages/instructor/InstructorContenido';
 import { InstructorConfig } from './pages/instructor/InstructorConfig';
 
 const PADRE_SIDEBAR: SidebarLink[] = [
@@ -25,6 +26,7 @@ const PADRE_SIDEBAR: SidebarLink[] = [
 ];
 const INSTRUCTOR_SIDEBAR: SidebarLink[] = [
   { to: '/instructor', label: 'Panel', icon: BarChart3, end: true },
+  { to: '/instructor/contenido', label: 'Contenido + IA', icon: Sparkles },
   { to: '/instructor/config', label: 'Configuración', icon: Settings },
 ];
 
@@ -65,6 +67,7 @@ export function App() {
       <Route path="/padre/detalle" element={<RequireRole role="padre"><RoleLayout role="padre" sidebar={PADRE_SIDEBAR}><PadreDetalle /></RoleLayout></RequireRole>} />
       <Route path="/padre/config" element={<RequireRole role="padre"><RoleLayout role="padre" sidebar={PADRE_SIDEBAR}><PadreConfig /></RoleLayout></RequireRole>} />
       <Route path="/instructor" element={<RequireRole role="instructor"><RoleLayout role="instructor" sidebar={INSTRUCTOR_SIDEBAR}><InstructorDashboard /></RoleLayout></RequireRole>} />
+      <Route path="/instructor/contenido" element={<RequireRole role="instructor"><RoleLayout role="instructor" sidebar={INSTRUCTOR_SIDEBAR}><InstructorContenido /></RoleLayout></RequireRole>} />
       <Route path="/instructor/alumno/:studentId" element={<RequireRole role="instructor"><RoleLayout role="instructor" sidebar={INSTRUCTOR_SIDEBAR}><InstructorAlumno /></RoleLayout></RequireRole>} />
       <Route path="/instructor/config" element={<RequireRole role="instructor"><RoleLayout role="instructor" sidebar={INSTRUCTOR_SIDEBAR}><InstructorConfig /></RoleLayout></RequireRole>} />
       <Route path="*" element={<RootRedirect />} />
