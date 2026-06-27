@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    @keyframes neon-pulse {
+      0%,100% { box-shadow: 0 0 10px #9CFF0F88, 0 0 28px #9CFF0F33; }
+      50%      { box-shadow: 0 0 22px #9CFF0Fcc, 0 0 56px #9CFF0F66; }
+    }
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes dot-blink {
+      0%,80%,100% { opacity: 0.15; }
+      40%          { opacity: 1; }
+    }
+    @keyframes celebrate-glow {
+      0%   { box-shadow: 0 0 0 #9CFF0F00; }
+      40%  { box-shadow: 0 0 22px #9CFF0Fcc, 0 0 48px #9CFF0F55; }
+      100% { box-shadow: 0 0 6px #9CFF0F44; }
+    }
+    body { margin: 0; background: #000; font-family: 'Plus Jakarta Sans', sans-serif; }
+    * { box-sizing: border-box; }
+  </style>
+</helmet>
+
+<div style="min-height: 100svh; background: #000; display: flex; justify-content: center; padding: 20px 16px 56px;">
+  <div style="width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 14px;">
+
+    <!-- ── HEADER ─────────────────────────────────────────── -->
+    <div style="display: flex; align-items: center; gap: 10px; padding: 4px 0;">
+      <div style="width: 42px; height: 42px; border-radius: 50%; background: #38123B; border: 2px solid #56358C; display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0; box-shadow: {{ avatarGlow }}; transition: box-shadow 0.6s ease;">🤖</div>
+      <div style="flex: 1; min-width: 0;">
+        <div style="font-size: 10px; font-weight: 700; color: #56358C; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 1px;">FÍSICA · Cinemática</div>
+        <div style="font-family: 'Bebas Neue', sans-serif; font-size: 21px; color: #fff; line-height: 1.1; letter-spacing: 0.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">VELOCIDAD VECTORIAL</div>
+      </div>
+      <div style="text-align: right; flex-shrink: 0;">
+        <div style="font-family: 'Bebas Neue', sans-serif; font-size: 34px; line-height: 1; color: {{ domainColor }}; transition: color 0.6s ease;">{{ domainPct }}</div>
+        <div style="font-size: 9px; color: #ffffff40; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase;">DOMINIO</div>
+      </div>
+    </div>
+
+    <!-- ── DOMAIN BAR ─────────────────────────────────────── -->
+    <div>
+      <div style="background: #111; border-radius: 99px; height: 7px; overflow: hidden; border: 1px solid #56358C33;">
+        <div style="height: 100%; width: {{ domainPctStr }}; background: {{ domainBarBg }}; border-radius: 99px; transition: width 1s cubic-bezier(.22,1,.36,1); box-shadow: {{ domainGlow }};"></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 5px;">
+        <div style="font-size: 11px; font-weight: 700; color: {{ domainColor }}; transition: color 0.6s ease;">{{ domainLabel }}</div>
+        <div style="font-size: 10px; color: #ffffff25; letter-spacing: 0.5px;">nivel de dominio</div>
+      </div>
+    </div>
+
+    <!-- ── QUESTION CARD ──────────────────────────────────── -->
+    <div style="background: #162E84; border: 1px solid #56358C; border-radius: 16px; padding: 20px;">
+      <div style="font-size: 10px; font-weight: 800; color: #9CFF0F; text-transform: uppercase; letter-spacing: 2.5px; margin-bottom: 10px;">PREGUNTA ACTUAL</div>
+      <div style="font-size: 15px; font-weight: 600; color: #fff; line-height: 1.55; text-wrap: pretty;">¿Cuál de las siguientes definiciones describe mejor la <span style="color: #9CFF0F; font-weight: 700;">velocidad vectorial</span> de un objeto en movimiento?</div>
+    </div>
+
+    <!-- ── ANSWER AREA (question state only) ─────────────── -->
+    <sc-if value="{{ isQuestion }}" hint-placeholder-val="{{ true }}">
+
+      <!-- MCQ Options -->
+      <sc-if value="{{ isMultiple }}" hint-placeholder-val="{{ true }}">
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+
+          <div onClick="{{ click0 }}" style="background: {{ bg0 }}; border: 2px solid {{ bd0 }}; border-radius: 12px; padding: 13px 14px; cursor: pointer; display: flex; align-items: flex-start; gap: 11px; transition: all 0.15s;">
+            <div style="width: 20px; height: 20px; border-radius: 50%; border: 2px solid {{ bd0 }}; background: {{ rb0 }}; flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; transition: all 0.15s;">
+              <sc-if value="{{ sel0 }}" hint-placeholder-val="{{ false }}"><div style="width: 9px; height: 9px; border-radius: 50%; background: #9CFF0F;"></div></sc-if>
+            </div>
+            <div style="font-size: 14px; color: {{ tc0 }}; line-height: 1.45; flex: 1; transition: color 0.15s;">{{ opt0 }}</div>
+          </div>
+
+          <div onClick="{{ click1 }}" style="background: {{ bg1 }}; border: 2px solid {{ bd1 }}; border-radius: 12px; padding: 13px 14px; cursor: pointer; display: flex; align-items: flex-start; gap: 11px; transition: all 0.15s;">
+            <div style="width: 20px; height: 20px; border-radius: 50%; border: 2px solid {{ bd1 }}; background: {{ rb1 }}; flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; transition: all 0.15s;">
+              <sc-if value="{{ sel1 }}" hint-placeholder-val="{{ false }}"><div style="width: 9px; height: 9px; border-radius: 50%; background: #9CFF0F;"></div></sc-if>
+            </div>
+            <div style="font-size: 14px; color: {{ tc1 }}; line-height: 1.45; flex: 1; transition: color 0.15s;">{{ opt1 }}</div>
+          </div>
+
+          <div onClick="{{ click2 }}" style="background: {{ bg2 }}; border: 2px solid {{ bd2 }}; border-radius: 12px; padding: 13px 14px; cursor: pointer; display: flex; align-items: flex-start; gap: 11px; transition: all 0.15s;">
+            <div style="width: 20px; height: 20px; border-radius: 50%; border: 2px solid {{ bd2 }}; background: {{ rb2 }}; flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; transition: all 0.15s;">
+              <sc-if value="{{ sel2 }}" hint-placeholder-val="{{ false }}"><div style="width: 9px; height: 9px; border-radius: 50%; background: #9CFF0F;"></div></sc-if>
+            </div>
+            <div style="font-size: 14px; color: {{ tc2 }}; line-height: 1.45; flex: 1; transition: color 0.15s;">{{ opt2 }}</div>
+          </div>
+
+          <div onClick="{{ click3 }}" style="background: {{ bg3 }}; border: 2px solid {{ bd3 }}; border-radius: 12px; padding: 13px 14px; cursor: pointer; display: flex; align-items: flex-start; gap: 11px; transition: all 0.15s;">
+            <div style="width: 20px; height: 20px; border-radius: 50%; border: 2px solid {{ bd3 }}; background: {{ rb3 }}; flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; transition: all 0.15s;">
+              <sc-if value="{{ sel3 }}" hint-placeholder-val="{{ false }}"><div style="width: 9px; height: 9px; border-radius: 50%; background: #9CFF0F;"></div></sc-if>
+            </div>
+            <div style="font-size: 14px; color: {{ tc3 }}; line-height: 1.45; flex: 1; transition: color 0.15s;">{{ opt3 }}</div>
+          </div>
+
+        </div>
+      </sc-if>
+
+      <!-- Free-text input -->
+      <sc-if value="{{ isText }}" hint-placeholder-val="{{ false }}">
+        <div style="background: #0c0c0c; border: 1.5px solid #56358C; border-radius: 12px; overflow: hidden;">
+          <textarea value="{{ textAnswer }}" onChange="{{ setTextAnswer }}" placeholder="Escribe tu respuesta aquí..." style="width: 100%; min-height: 110px; background: transparent; border: none; outline: none; color: #fff; font-family: 'Plus Jakarta Sans',sans-serif; font-size: 15px; line-height: 1.6; padding: 14px; resize: none; display: block;"></textarea>
+          <div style="padding: 7px 14px; border-top: 1px solid #56358C22; display: flex; justify-content: flex-end;">
+            <div style="font-size: 11px; color: #56358C;">{{ charCount }}</div>
+          </div>
+        </div>
+      </sc-if>
+
+      <!-- Submit button -->
+      <div onClick="{{ handleSubmit }}" style="background: {{ submitBg }}; border-radius: 12px; padding: 15px; text-align: center; cursor: {{ submitCursor }}; font-family: 'Bebas Neue',sans-serif; font-size: 22px; letter-spacing: 2.5px; color: {{ submitColor }}; transition: background 0.2s, color 0.2s; animation: {{ submitAnim }};">ENVIAR RESPUESTA →</div>
+
+    </sc-if>
+
+    <!-- ── CHAT · Sending ─────────────────────────────────── -->
+    <sc-if value="{{ isSending }}" hint-placeholder-val="{{ false }}">
+      <div style="background: #162E84; border: 1px solid #56358C; border-radius: 16px; padding: 18px; display: flex; align-items: center; gap: 14px; animation: fade-up 0.3s ease;">
+        <div style="font-size: 26px;">📡</div>
+        <div>
+          <div style="font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 7px;">Enviando respuesta</div>
+          <div style="display: flex; gap: 5px; align-items: center;">
+            <div style="width: 7px; height: 7px; border-radius: 50%; background: #9CFF0F; animation: dot-blink 1.3s ease infinite 0s;"></div>
+            <div style="width: 7px; height: 7px; border-radius: 50%; background: #9CFF0F; animation: dot-blink 1.3s ease infinite 0.22s;"></div>
+            <div style="width: 7px; height: 7px; border-radius: 50%; background: #9CFF0F; animation: dot-blink 1.3s ease infinite 0.44s;"></div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ── CHAT · Processing ──────────────────────────────── -->
+    <sc-if value="{{ isProcessing }}" hint-placeholder-val="{{ false }}">
+      <div style="background: #38123B; border: 1px solid #56358C; border-radius: 16px; padding: 20px; animation: fade-up 0.4s ease;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">
+          <div style="font-size: 24px;">🧠</div>
+          <div>
+            <div style="font-size: 14px; font-weight: 700; color: #fff;">Analizando tu respuesta...</div>
+            <div style="font-size: 12px; color: #ffffff70; margin-top: 2px;">Esto puede tomar hasta 30 seg. — ¡ya casi!</div>
+          </div>
+        </div>
+        <div style="background: #00000050; border-radius: 99px; height: 5px; overflow: hidden;">
+          <div style="height: 100%; width: {{ processingPctStr }}; background: linear-gradient(90deg, #4D34B6, #9CFF0F); border-radius: 99px; transition: width 0.25s linear;"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+          <div style="font-size: 11px; color: #ffffff40;">Procesando inteligencia adaptativa</div>
+          <div style="font-size: 11px; color: #9CFF0F; font-weight: 700;">{{ processingPctStr }}</div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ── CHAT · Feedback ────────────────────────────────── -->
+    <sc-if value="{{ isFeedback }}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; gap: 10px; animation: fade-up 0.5s ease;">
+        <div style="background: #38123B; border: 1px solid #56358C; border-radius: 16px 16px 16px 4px; padding: 18px;">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+            <div style="width: 26px; height: 26px; border-radius: 50%; background: #56358C; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;">🤖</div>
+            <div style="font-size: 10px; font-weight: 800; color: #9CFF0F; letter-spacing: 1.5px; text-transform: uppercase;">SISTEMA ADAPTATIVO</div>
+          </div>
+          <div style="font-size: 14px; color: #ffffffee; line-height: 1.65; text-wrap: pretty;">{{ feedbackText }}</div>
+        </div>
+        <div onClick="{{ resetQuestion }}" style="background: #162E84; border: 1.5px solid #9CFF0F; border-radius: 12px; padding: 13px; text-align: center; cursor: pointer; font-family: 'Bebas Neue',sans-serif; font-size: 20px; letter-spacing: 2px; color: #9CFF0F; transition: background 0.15s;" style-hover="background: #1e3a9c;">SIGUIENTE PREGUNTA →</div>
+      </div>
+    </sc-if>
+
+    <!-- ── NEXT STEP INDICATOR ────────────────────────────── -->
+    <div style="background: #0d0d0d; border: 1px solid {{ nextBorder }}; border-radius: 12px; padding: 13px 16px; display: flex; align-items: center; gap: 12px; transition: border-color 0.6s ease;">
+      <div style="font-size: 20px; flex-shrink: 0;">{{ nextIcon }}</div>
+      <div style="flex: 1;">
+        <div style="font-size: 10px; font-weight: 800; color: {{ nextColor }}; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 2px; transition: color 0.6s ease;">SIGUIENTE PASO</div>
+        <div style="font-size: 12px; color: #ffffff70; line-height: 1.4;">{{ nextMsg }}</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;$preview&quot;: { &quot;width&quot;: 420, &quot;height&quot;: 900 },
+  &quot;questionType&quot;: {
+    &quot;editor&quot;: &quot;enum&quot;,
+    &quot;default&quot;: &quot;multiple&quot;,
+    &quot;options&quot;: [&quot;multiple&quot;, &quot;text&quot;],
+    &quot;tsType&quot;: &quot;'multiple' | 'text'&quot;,
+    &quot;section&quot;: &quot;Tipo de pregunta&quot;
+  }
+}">
+class Component extends DCLogic {
+  state = {
+    appState: 'question',   // 'question' | 'sending' | 'processing' | 'feedback'
+    selected: null,
+    textAnswer: '',
+    processingPct: 0,
+    domainPct: 62,
+    celebrating: false,
+    _iv: null,
+  };
+
+  componentWillUnmount() {
+    if (this.state._iv) clearInterval(this.state._iv);
+  }
+
+  selectOption(i) {
+    if (this.state.appState !== 'question') return;
+    this.setState({ selected: i });
+  }
+
+  handleSubmit() {
+    const { appState, selected, textAnswer } = this.state;
+    const qt = this.props.questionType ?? 'multiple';
+    if (appState !== 'question') return;
+    if (qt === 'multiple' && selected === null) return;
+    if (qt === 'text' && !textAnswer.trim()) return;
+
+    this.setState({ appState: 'sending' });
+
+    setTimeout(() => {
+      this.setState({ appState: 'processing', processingPct: 0 });
+      const t0 = Date.now();
+      const dur = 5000;
+      const iv = setInterval(() => {
+        const elapsed = Date.now() - t0;
+        const p = Math.min(92, (elapsed / dur) * 100);
+        this.setState({ processingPct: p });
+        if (elapsed >= dur) {
+          clearInterval(iv);
+          const nd = Math.min(100, this.state.domainPct + 9);
+          this.setState({
+            appState: 'feedback',
+            processingPct: 100,
+            domainPct: nd,
+            celebrating: true,
+            _iv: null,
+          });
+          setTimeout(() => this.setState({ celebrating: false }), 2200);
+        }
+      }, 120);
+      this.setState({ _iv: iv });
+    }, 1100);
+  }
+
+  resetQuestion() {
+    if (this.state._iv) clearInterval(this.state._iv);
+    this.setState({
+      appState: 'question',
+      selected: null,
+      textAnswer: '',
+      processingPct: 0,
+      _iv: null,
+    });
+  }
+
+  renderVals() {
+    const { appState, selected, textAnswer, processingPct, domainPct, celebrating } = this.state;
+    const qt = this.props.questionType ?? 'multiple';
+
+    const opts = [
+      'La distancia total recorrida por unidad de tiempo, sin importar la dirección.',
+      'La rapidez escalar promedio del cuerpo a lo largo de toda su trayectoria.',
+      'El desplazamiento (cambio de posición) dividido por el tiempo transcurrido.',
+      'La aceleración instantánea de un objeto que parte desde el reposo.',
+    ];
+
+    const sel = (i) => selected === i;
+    const optBg  = (i) => sel(i) ? '#1a3a6e' : '#0d1835';
+    const optBd  = (i) => sel(i) ? '#9CFF0F'  : '#56358C';
+    const optRb  = (i) => sel(i) ? '#162E84'  : 'transparent';
+    const optTc  = (i) => sel(i) ? '#ffffff'  : '#ffffffcc';
+
+    // Domain theming
+    const dColor  = domainPct >= 70 ? '#9CFF0F' : domainPct >= 40 ? '#4D34B6' : '#56358C';
+    const dBarBg  = domainPct >= 70
+      ? 'linear-gradient(90deg,#4D34B6,#9CFF0F)'
+      : domainPct >= 40
+      ? 'linear-gradient(90deg,#38123B,#4D34B6)'
+      : '#38123B';
+    const dGlow   = celebrating
+      ? '0 0 14px #9CFF0Faa'
+      : domainPct >= 70 ? '0 0 6px #9CFF0F55' : 'none';
+    const dLabel  = domainPct >= 80 ? '¡Dominado! 🏆'
+      : domainPct >= 60 ? 'Progresando 📈'
+      : domainPct >= 30 ? 'En desarrollo'
+      : 'Iniciando';
+
+    // Submit button state
+    const canSend = qt === 'multiple' ? selected !== null : textAnswer.trim().length > 0;
+    const submitBg     = canSend ? '#9CFF0F' : '#191919';
+    const submitColor  = canSend ? '#000000' : '#ffffff20';
+    const submitCursor = canSend ? 'pointer'  : 'not-allowed';
+    const submitAnim   = canSend ? 'neon-pulse 2s ease infinite' : 'none';
+
+    // Feedback message
+    const correct = selected === 2 || qt === 'text';
+    const feedbackText = correct
+      ? '¡Excelente! Identificaste correctamente que la velocidad vectorial es el desplazamiento dividido por el tiempo. A diferencia de la rapidez escalar, incluye dirección — eso la convierte en una magnitud vectorial. Tu comprensión de la cinemática está sólida. ¡Sigue así! 🎯'
+      : 'Buen intento. La respuesta correcta es la C: el desplazamiento dividido por el tiempo transcurrido. La velocidad vectorial tiene magnitud Y dirección, a diferencia de la rapidez. La próxima pregunta te ayudará a afianzar este concepto. ¡Tú puedes! 💪';
+
+    // Next step
+    const advance   = domainPct >= 70;
+    const nextIcon  = advance ? '⚡' : '🔁';
+    const nextMsg   = advance
+      ? '¡Estás listo para avanzar! El sistema recomienda el tema siguiente: Aceleración.'
+      : 'Refuerza este tema con una o dos preguntas más antes de avanzar.';
+    const nextColor  = advance ? '#9CFF0F'   : '#4D34B6';
+    const nextBorder = advance ? '#9CFF0F44' : '#56358C';
+
+    return {
+      // State flags
+      isQuestion:   appState === 'question',
+      isSending:    appState === 'sending',
+      isProcessing: appState === 'processing',
+      isFeedback:   appState === 'feedback',
+      isMultiple:   qt === 'multiple',
+      isText:       qt === 'text',
+
+      // Options
+      opt0: opts[0], opt1: opts[1], opt2: opts[2], opt3: opts[3],
+      bg0: optBg(0), bg1: optBg(1), bg2: optBg(2), bg3: optBg(3),
+      bd0: optBd(0), bd1: optBd(1), bd2: optBd(2), bd3: optBd(3),
+      rb0: optRb(0), rb1: optRb(1), rb2: optRb(2), rb3: optRb(3),
+      tc0: optTc(0), tc1: optTc(1), tc2: optTc(2), tc3: optTc(3),
+      sel0: sel(0),  sel1: sel(1),  sel2: sel(2),  sel3: sel(3),
+      click0: () => this.selectOption(0),
+      click1: () => this.selectOption(1),
+      click2: () => this.selectOption(2),
+      click3: () => this.selectOption(3),
+
+      // Text input
+      textAnswer,
+      setTextAnswer: (e) => this.setState({ textAnswer: e.target.value }),
+      charCount: textAnswer.length + ' car.',
+
+      // Submit
+      handleSubmit: () => this.handleSubmit(),
+      submitBg, submitColor, submitCursor, submitAnim,
+
+      // Processing
+      processingPct,
+      processingPctStr: Math.round(processingPct) + '%',
+
+      // Domain
+      domainPct,
+      domainPctStr: domainPct + '%',
+      domainColor: dColor,
+      domainBarBg: dBarBg,
+      domainGlow: dGlow,
+      domainLabel: dLabel,
+      avatarGlow: celebrating ? '0 0 18px #9CFF0Fbb' : 'none',
+
+      // Feedback
+      feedbackText,
+      resetQuestion: () => this.resetQuestion(),
+
+      // Next step
+      nextIcon, nextMsg, nextColor, nextBorder,
+    };
+  }
+}
+</script>
+</body>
+</html>
