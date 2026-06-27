@@ -5,6 +5,7 @@ import { ActivityHeatmap } from '../../components/shared/ActivityHeatmap';
 import { EmptyState } from '../../components/shared/EmptyState';
 import { MasteryBar } from '../../components/shared/MasteryBar';
 import { PageHeader } from '../../components/shared/PageHeader';
+import { StrengthsCard } from '../../components/shared/StrengthsCard';
 import { TrendChart } from '../../components/shared/TrendChart';
 import { Button } from '../../components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/Card';
@@ -42,6 +43,7 @@ export function PadreDashboard() {
     {loadState === 'empty' && <EmptyState title="Aún no hay alumnos vinculados" description="Pide al alumno que genere un código y úsalo arriba para registrar el consentimiento." />}
     {loadState === 'ready' && child && <div className="space-y-6">
       <div className="flex flex-wrap gap-2">{data.children.map((item) => <Button key={item.id} variant={item.id === child.id ? 'default' : 'outline'} size="sm" onClick={() => selectChild(item.id)}>{item.name}</Button>)}</div>
+      <StrengthsCard child={{ name: child.name, strengths: child.strengths, suggestedCareers: child.suggestedCareers }} />
       <div className="grid gap-6 lg:grid-cols-2"><Card className="rounded-2xl"><CardHeader><CardTitle className="text-base">Dominio de {child.name}</CardTitle></CardHeader><CardContent className="space-y-4">{child.mastery.map((item) => <MasteryBar key={item.topic} topic={item.topic} mastery={item.mastery} />)}</CardContent></Card><Card className="rounded-2xl"><CardHeader><CardTitle className="text-base">Actividad reciente</CardTitle></CardHeader><CardContent><ActivityHeatmap days={child.activity} /></CardContent></Card></div>
       {child.history.length > 0 && <Card className="rounded-2xl"><CardHeader><CardTitle className="text-base">Tendencia</CardTitle></CardHeader><CardContent><TrendChart data={child.history} /></CardContent></Card>}
     </div>}
