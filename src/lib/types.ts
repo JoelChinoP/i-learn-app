@@ -47,6 +47,82 @@ export interface StudentDashboard {
   answeredCount: number;
   correctCount: number;
   streakDays: number;
+  xp: {
+    total: number;
+    level: number;
+    currentLevelXp: number;
+    nextLevelXp: number;
+    progressPct: number;
+  };
+  missions: {
+    daily: MissionProgress[];
+    weekly: MissionProgress[];
+  };
+  achievements: {
+    earned: EarnedAchievement[];
+    locked: LockedAchievement[];
+    recent_xp: RecentXpEvent[];
+  };
+  leaderboardOptIn: boolean;
+}
+
+export interface MissionProgress {
+  id: string;
+  code: string;
+  title: string;
+  hint: string;
+  icon: string;
+  target_kind: string;
+  target_count: number;
+  xp_reward: number;
+  current: number;
+  progress_pct: number;
+  completed: boolean;
+  claimed: boolean;
+  window_start: string;
+}
+
+export interface EarnedAchievement {
+  id: string;
+  code: string;
+  label: string;
+  description: string;
+  icon: string;
+  xp_reward: number;
+  earned_at: string;
+}
+
+export interface LockedAchievement {
+  id: string;
+  code: string;
+  label: string;
+  description: string;
+  icon: string;
+  xp_reward: number;
+}
+
+export interface RecentXpEvent {
+  source: string;
+  amount: number;
+  created_at: string;
+  metadata: Record<string, unknown>;
+}
+
+export interface LeaderboardEntry {
+  rank: number;
+  student_id: string;
+  alias: string;
+  total_xp: number;
+  window_xp: number;
+}
+
+export interface LeaderboardData {
+  scope: string;
+  window: string;
+  window_start: string;
+  my_rank: number | null;
+  me_in: boolean;
+  rows: LeaderboardEntry[];
 }
 
 export type CareerCluster =

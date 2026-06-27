@@ -10,6 +10,9 @@ import { LoopLoader, LoopMascot } from '../components/shared/LoopMascot';
 import { GamificationPanel } from '../components/alumno/GamificationPanel';
 import { AudioRecorder } from '../components/alumno/AudioRecorder';
 import { SessionSetup, type SessionSetupValue } from '../components/alumno/SessionSetup';
+import { DailyMissionsCard } from '../components/alumno/DailyMissionsCard';
+import { LeaderboardCard } from '../components/alumno/LeaderboardCard';
+import { Celebration } from '../components/alumno/Celebration';
 import { Flame, Keyboard, Mic, Settings2, BrainCog } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
@@ -70,6 +73,8 @@ export function AlumnoView() {
   const [evalStats, setEvalStats] = useState<{ answered: number; correct: number }>({ answered: 0, correct: 0 });
   const [setup, setSetup] = useState<SessionSetupValue | null>(() => readStoredSetup());
   const [showSetup, setShowSetup] = useState(false);
+  const [missionCelebration, setMissionCelebration] = useState<string | null>(null);
+  const [leaderboardOptIn, setLeaderboardOptIn] = useState<boolean>(true);
   const sessionId = useRef(crypto.randomUUID());
   const activeResponseId = useRef<string | null>(null);
   const pollIntervalRef = useRef<number | null>(null);
@@ -119,6 +124,7 @@ export function AlumnoView() {
     const next = data as StudentDashboard;
     dashboardCache.set(cacheKey, next);
     setDashboard(next);
+    setLeaderboardOptIn(next.leaderboardOptIn);
   }, [cacheKey]);
 
   useEffect(() => {
@@ -700,7 +706,28 @@ export function AlumnoView() {
 
         {/* SIDE RAIL — desktop side panel, mobile stacks below */}
         <aside className="flex flex-col gap-4 lg:sticky lg:top-20 lg:self-start">
-          <GamificationPanel streakDays={dashboard.streakDays} />
+          <GamificationPanel
+            dashboard={{
+              xp: dashboard.xp,
+              streakDays: dashboard.streakDays,
+              achievements: dashboard.achievements,
+            }}
+          />
+
+          <DailyMissionsCard
+            daily={dashboard.missions.daily}
+            weekly={dashboard.missions.weekly}
+            onClaimed={(mission) => {
+              setMissionCelebration(mission.title);
+              void loadDashboard();
+            }}
+          />
+
+          <LeaderboardCard
+            studentId={dashboard.studentId}
+            optIn={leaderboardOptIn}
+            onOptInChange={setLeaderboardOptIn}
+          />
 
           <Card className="rounded-2xl border border-[#56358C] bg-[#0d0d0d]">
             <CardHeader>
@@ -758,6 +785,11 @@ export function AlumnoView() {
           }}
         />
       )}
+
+      <Celebration
+        trigger={missionCelebration ? `¡Misión completada! ${missionCelebration}` : null}
+        onDone={() => setMissionCelebration(null)}
+      />
     </main>
   );
 }
