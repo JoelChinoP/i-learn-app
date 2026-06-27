@@ -2,14 +2,16 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } f
 import { Link } from 'react-router-dom';
 import { RefreshCw, RotateCcw, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { ActivityHeatmap } from '../components/shared/ActivityHeatmap';
 import { EmptyState } from '../components/shared/EmptyState';
-import { MasteryBar } from '../components/shared/MasteryBar';
-import { TrendChart } from '../components/shared/TrendChart';
 import { LoopLoader, LoopMascot } from '../components/shared/LoopMascot';
-import { GamificationPanel } from '../components/alumno/GamificationPanel';
+import { AchievementsShowcase } from '../components/alumno/AchievementsShowcase';
+import { AnalyticsShowcase } from '../components/alumno/AnalyticsShowcase';
+import { ProgressFooter } from '../components/alumno/ProgressFooter';
 import { AudioRecorder } from '../components/alumno/AudioRecorder';
 import { SessionSetup, type SessionSetupValue } from '../components/alumno/SessionSetup';
+import { DailyMissionsCard } from '../components/alumno/DailyMissionsCard';
+import { LeaderboardCard } from '../components/alumno/LeaderboardCard';
+import { Celebration } from '../components/alumno/Celebration';
 import { Flame, Keyboard, Mic, Settings2, BrainCog } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
@@ -70,6 +72,8 @@ export function AlumnoView() {
   const [evalStats, setEvalStats] = useState<{ answered: number; correct: number }>({ answered: 0, correct: 0 });
   const [setup, setSetup] = useState<SessionSetupValue | null>(() => readStoredSetup());
   const [showSetup, setShowSetup] = useState(false);
+  const [missionCelebration, setMissionCelebration] = useState<string | null>(null);
+  const [leaderboardOptIn, setLeaderboardOptIn] = useState<boolean>(true);
   const sessionId = useRef(crypto.randomUUID());
   const activeResponseId = useRef<string | null>(null);
   const pollIntervalRef = useRef<number | null>(null);
@@ -119,6 +123,7 @@ export function AlumnoView() {
     const next = data as StudentDashboard;
     dashboardCache.set(cacheKey, next);
     setDashboard(next);
+    setLeaderboardOptIn(next.leaderboardOptIn);
   }, [cacheKey]);
 
   useEffect(() => {
@@ -306,7 +311,7 @@ export function AlumnoView() {
       : freeText.trim().length > 0;
 
   return (
-    <main className="mx-auto w-full max-w-[1280px] px-4 pb-14 pt-5 sm:px-6">
+    <main className="mx-auto w-full max-w-[1280px] px-4 pb-24 pt-5 sm:px-6">
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         <section className="mx-auto flex w-full max-w-[560px] flex-col gap-4 lg:mx-0 lg:max-w-none">
 
@@ -698,49 +703,38 @@ export function AlumnoView() {
 
         </section>
 
-        {/* SIDE RAIL — desktop side panel, mobile stacks below */}
-        <aside className="flex flex-col gap-4 lg:sticky lg:top-20 lg:self-start">
-          <GamificationPanel streakDays={dashboard.streakDays} />
+        {/* SIDE RAIL — desktop side panel, mobile stacks below.
+            XP/streak moved to a sticky footer (ProgressFooter) so it stays visible
+            without scrolling. Side rail keeps: missions → leaderboard → colapsables. */}
+        <aside className="flex flex-col gap-2.5 lg:sticky lg:top-20 lg:self-start">
+          <DailyMissionsCard
+            daily={dashboard.missions.daily}
+            weekly={dashboard.missions.weekly}
+            onClaimed={(mission) => {
+              setMissionCelebration(mission.title);
+              void loadDashboard();
+            }}
+          />
 
-          <Card className="rounded-2xl border border-[#56358C] bg-[#0d0d0d]">
-            <CardHeader>
-              <CardTitle className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#9CFF0F]">
-                Dominio por tema
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {dashboard.masteryByTopic.map((item) => (
-                <MasteryBar key={item.topic} topic={item.topic} mastery={item.mastery} />
-              ))}
-            </CardContent>
-          </Card>
+          <LeaderboardCard
+            studentId={dashboard.studentId}
+            optIn={leaderboardOptIn}
+            onOptInChange={setLeaderboardOptIn}
+          />
 
-          <Card className="rounded-2xl border border-[#56358C] bg-[#0d0d0d]">
-            <CardHeader>
-              <CardTitle className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#9CFF0F]">
-                Actividad reciente
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ActivityHeatmap days={dashboard.activity} />
-            </CardContent>
-          </Card>
+          <AchievementsShowcase
+            earned={dashboard.achievements.earned}
+            locked={dashboard.achievements.locked}
+          />
 
-          {dashboard.history.length > 0 && (
-            <Card className="rounded-2xl border border-[#56358C] bg-[#0d0d0d]">
-              <CardHeader>
-                <CardTitle className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#9CFF0F]">
-                  Progreso
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <TrendChart data={dashboard.history} />
-              </CardContent>
-            </Card>
-          )}
+          <AnalyticsShowcase
+            masteryByTopic={dashboard.masteryByTopic}
+            activity={dashboard.activity}
+            history={dashboard.history}
+          />
 
           <div className="pt-1 text-center text-[10px] uppercase tracking-[0.32em] text-white/25">
-            {dashboard.streakDays} día(s) activo · {dashboard.answeredCount} respuestas
+            {dashboard.answeredCount} respuestas registradas
           </div>
         </aside>
       </div>
@@ -758,6 +752,19 @@ export function AlumnoView() {
           }}
         />
       )}
+
+      <Celebration
+        trigger={missionCelebration ? `¡Misión completada! ${missionCelebration}` : null}
+        onDone={() => setMissionCelebration(null)}
+      />
+
+      <ProgressFooter
+        xp={dashboard.xp}
+        streakDays={dashboard.streakDays}
+        recentXp={dashboard.achievements.recent_xp}
+        studentName={dashboard.studentName}
+        onOpenSetup={() => setShowSetup(true)}
+      />
     </main>
   );
 }
