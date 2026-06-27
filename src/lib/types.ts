@@ -49,6 +49,25 @@ export interface StudentDashboard {
   streakDays: number;
 }
 
+export type CareerCluster =
+  | 'ingenieria'
+  | 'tecnologia'
+  | 'arquitectura'
+  | 'salud'
+  | 'economia'
+  | 'ciencias'
+  | 'arte-diseno'
+  | 'educacion';
+
+export interface SuggestedCareer {
+  id: string;
+  name: string;
+  cluster: CareerCluster;
+  description: string;
+  /** Suma de (afinidad tema × dominio del alumno) sobre todos los temas. */
+  score: number;
+}
+
 export interface ParentChild {
   id: string;
   name: string;
@@ -56,6 +75,10 @@ export interface ParentChild {
   mastery: Array<MasteryPoint & { alert: boolean }>;
   history: MasteryHistoryPoint[];
   activity: HeatmapDay[];
+  /** Top 3 temas por dominio (pueden ser bajos si el alumno es nuevo). */
+  strengths: MasteryPoint[];
+  /** Carreras afines filtradas por un umbral mínimo de afinidad efectiva. */
+  suggestedCareers: SuggestedCareer[];
 }
 
 export interface ParentDashboardData {
