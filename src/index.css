@@ -127,9 +127,28 @@
   25%      { transform: translateX(-1px); }
   75%      { transform: translateX(1px); }
 }
+@keyframes loop-login-logo-float {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    filter: drop-shadow(0 0 8px rgb(156 255 15 / 18%));
+  }
+  50% {
+    transform: translateY(-6px) scale(1.025);
+    filter: drop-shadow(0 0 16px rgb(156 255 15 / 38%)) drop-shadow(0 8px 20px rgb(77 52 182 / 35%));
+  }
+}
 
 .loop-neon-pulse { animation: loop-neon-pulse 2s ease infinite; }
 .loop-fade-up    { animation: loop-fade-up 0.4s ease both; }
+.loop-login-logo {
+  animation: loop-login-logo-float 4.5s ease-in-out infinite;
+  transform-origin: center;
+  will-change: transform, filter;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loop-login-logo { animation: none; }
+}
 
 body {
   font-family: 'Plus Jakarta Sans', system-ui, sans-serif;

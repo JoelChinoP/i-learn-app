@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
 import { UserMenu } from './UserMenu';
-import { LoopMascot } from './LoopMascot';
+import { LoopLogo } from './LoopLogo';
 
 export interface SidebarLink {
   to: string;
@@ -37,15 +37,7 @@ export function AppShell({ user, roleLabel, settingsPath, profilePath, sidebar, 
               <Menu className="size-5" />
             </button>
           )}
-          <div className="flex items-center gap-2.5">
-            <LoopMascot size={34} mood="idle" />
-            <span
-              className="text-xl tracking-[0.32em] text-white"
-              style={{ fontFamily: '"Bebas Neue", sans-serif' }}
-            >
-              LOOP
-            </span>
-          </div>
+          <LoopLogo className="h-12 w-auto shrink-0" />
           <span className="rounded-full border border-[#56358C] bg-[#38123B] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[#9CFF0F]">
             {roleLabel}
           </span>

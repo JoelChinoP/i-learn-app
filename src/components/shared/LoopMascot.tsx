@@ -3,6 +3,8 @@
  * Cápsula oscura con borde violeta y dos ojos neón.
  * El "loop" del nombre se encarna en los ojos circulares que parpadean.
  */
+import { LoopLogo } from './LoopLogo';
+
 export type LoopMood = 'idle' | 'thinking' | 'happy' | 'sad' | 'sleep';
 
 interface LoopMascotProps {
@@ -89,15 +91,7 @@ export function LoopSplash({ message = 'Iniciando Loop' }: { message?: string })
   return (
     <div className="flex min-h-screen w-full items-center justify-center bg-black">
       <div className="flex flex-col items-center gap-5">
-        <div className="loop-neon-pulse rounded-full">
-          <LoopMascot mood="idle" size={88} />
-        </div>
-        <p
-          className="font-display text-3xl tracking-[0.4em] text-white"
-          style={{ fontFamily: '"Bebas Neue", sans-serif' }}
-        >
-          LOOP
-        </p>
+        <LoopLogo className="loop-neon-pulse w-52" />
         <p className="text-xs uppercase tracking-[0.3em] text-white/40">{message}</p>
       </div>
     </div>

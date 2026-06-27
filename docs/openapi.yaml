@@ -1,0 +1,1087 @@
+openapi: 3.0.3
+info:
+  title: Learn App Supabase API
+  version: 0.1.0
+  license:
+    name: UNLICENSED
+  description: |
+    Client-facing API contract for this Vite/Supabase app.
+
+    This file documents the custom Edge Functions and the RPC endpoints the
+    browser calls directly. Supabase also exposes a generated Data API for
+    granted tables/functions, but that generated spec does not cover the
+    request and response contracts of these Edge Functions.
+
+    Internal functions protected by `x-internal-secret`, such as
+    `orchestrate-feedback` and `embed-knowledge`, are intentionally omitted.
+servers:
+  - url: https://{projectRef}.supabase.co
+    description: Hosted Supabase project
+    variables:
+      projectRef:
+        default: sjbdwihsfbtrgajpndcb
+  - url: http://127.0.0.1:54321
+    description: Local Supabase stack
+tags:
+  - name: Auth
+    description: Account registration and auth-adjacent flows.
+  - name: Student
+    description: Student-facing response and linking endpoints.
+  - name: Parent
+    description: Parent or tutor endpoints.
+  - name: Instructor
+    description: Instructor content and section management endpoints.
+  - name: AI Questions
+    description: Draft-only AI question generation and review.
+  - name: Dashboards
+    description: Aggregate role dashboard RPCs.
+paths:
+  /functions/v1/register-account:
+    post:
+      operationId: registerAccount
+      tags: [Auth]
+      summary: Register a new account and profile
+      description: |
+        Creates a Supabase Auth user and a matching domain profile through the
+        `register_profile` RPC. Hosted/local auth signup is disabled, so new
+        registrations should use this function.
+      security:
+        - SupabaseApiKey: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterAccountRequest'
+            examples:
+              student:
+                value:
+                  email: student@example.com
+                  password: password123
+                  fullName: Sofia Ramos
+                  role: alumno
+                  classCode: MAT-DEMO-2026
+              parent:
+                value:
+                  email: parent@example.com
+                  password: password123
+                  fullName: Ana Ramos
+                  role: padre
+                  studentLinkCode: ABCD-2345
+                  acceptConsent: true
+      responses:
+        '201':
+          description: Account registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterAccountResponse'
+        '409':
+          $ref: '#/components/responses/Error'
+        '422':
+          $ref: '#/components/responses/Error'
+        '500':
+          $ref: '#/components/responses/Error'
+
+  /functions/v1/rotate-link-code:
+    post:
+      operationId: rotateLinkCode
+      tags: [Student]
+      summary: Rotate the parent link code for the signed-in student
+      security:
+        - SupabaseApiKey: []
+          BearerAuth: []
+      responses:
+        '200':
+          description: New link code
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RotateLinkCodeResponse'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+
+  /functions/v1/link-student:
+    post:
+      operationId: linkStudent
+      tags: [Parent]
+      summary: Link a student to the signed-in parent or tutor
+      security:
+        - SupabaseApiKey: []
+          BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LinkStudentRequest'
+      responses:
+        '200':
+          description: Student linked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LinkStudentResponse'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '422':
+          $ref: '#/components/responses/Error'
+
+  /functions/v1/ingest-response:
+    post:
+      operationId: ingestResponse
+      tags: [Student]
+      summary: Submit a student answer for asynchronous feedback
+      description: |
+        Inserts a `student_responses` row and dispatches feedback processing.
+        The response is accepted with HTTP 202 while `orchestrate-feedback`
+        finalizes the evaluation in the background.
+      security:
+        - SupabaseApiKey: []
+          BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IngestResponseRequest'
+      responses:
+        '202':
+          description: Response accepted for processing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngestResponseAccepted'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '404':
+          $ref: '#/components/responses/Error'
+        '422':
+          $ref: '#/components/responses/Error'
+        '500':
+          $ref: '#/components/responses/Error'
+
+  /functions/v1/reexplain-response:
+    post:
+      operationId: reexplainResponse
+      tags: [Student]
+      summary: Generate another explanation for a prior response
+      security:
+        - SupabaseApiKey: []
+          BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReexplainResponseRequest'
+      responses:
+        '201':
+          description: New feedback version created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReexplainResponseAccepted'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '422':
+          $ref: '#/components/responses/Error'
+
+  /functions/v1/ingest-course-content:
+    post:
+      operationId: ingestCourseContent
+      tags: [Instructor]
+      summary: Upload instructor content for AI question generation
+      description: |
+        Stores text, fetches URL content, or extracts text from a PDF so the
+        content can be used as context by `generate-questions`.
+      security:
+        - SupabaseApiKey: []
+          BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IngestCourseContentRequest'
+      responses:
+        '200':
+          description: Content extracted and ready
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngestCourseContentResponse'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '422':
+          $ref: '#/components/responses/Error'
+
+  /functions/v1/generate-questions:
+    post:
+      operationId: generateQuestions
+      tags: [AI Questions]
+      summary: Generate AI draft questions for instructor review
+      description: |
+        Creates draft rows in `ai_draft_questions`. It never publishes active
+        student-facing questions directly.
+      security:
+        - SupabaseApiKey: []
+          BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateQuestionsRequest'
+      responses:
+        '200':
+          description: Draft questions created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GenerateQuestionsResponse'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '422':
+          $ref: '#/components/responses/Error'
+
+  /functions/v1/review-draft-question:
+    post:
+      operationId: reviewDraftQuestion
+      tags: [AI Questions]
+      summary: Approve or reject an AI draft question
+      description: |
+        Approval calls `approve_draft_question`, which inserts into `questions`
+        with `active = false` for later manual activation.
+      security:
+        - SupabaseApiKey: []
+          BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewDraftRequest'
+      responses:
+        '200':
+          description: Draft reviewed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReviewDraftResponse'
+        '401':
+          $ref: '#/components/responses/Error'
+        '403':
+          $ref: '#/components/responses/Error'
+        '422':
+          $ref: '#/components/responses/Error'
+
+  /rest/v1/rpc/get_student_dashboard:
+    post:
+      operationId: getStudentDashboard
+      tags: [Dashboards]
+      summary: Load the signed-in student dashboard snapshot
+      security:
+        - SupabaseApiKey: []
+          BearerAuth: []
+      requestBody:
+        $ref: '#/components/requestBodies/EmptyRpcBody'
+      responses:
+        '200':
+          description: Student dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StudentDashboard'
+        '401':
+          $ref: '#/components/responses/PostgrestError'
+        '403':
+          $ref: '#/components/responses/PostgrestError'
+
+  /rest/v1/rpc/get_parent_dashboard:
+    post:
+      operationId: getParentDashboard
+      tags: [Dashboards]
+      summary: Load aggregate child progress for the signed-in parent
+      security:
+        - SupabaseApiKey: []
+          BearerAuth: []
+      requestBody:
+        $ref: '#/components/requestBodies/EmptyRpcBody'
+      responses:
+        '200':
+          description: Parent dashboard data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParentDashboard'
+        '401':
+          $ref: '#/components/responses/PostgrestError'
+        '403':
+          $ref: '#/components/responses/PostgrestError'
+
+  /rest/v1/rpc/get_instructor_analytics:
+    post:
+      operationId: getInstructorAnalytics
+      tags: [Dashboards]
+      summary: Load aggregate analytics for the signed-in instructor
+      security:
+        - SupabaseApiKey: []
+          BearerAuth: []
+      requestBody:
+        $ref: '#/components/requestBodies/EmptyRpcBody'
+      responses:
+        '200':
+          description: Instructor analytics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InstructorAnalytics'
+        '401':
+          $ref: '#/components/responses/PostgrestError'
+        '403':
+          $ref: '#/components/responses/PostgrestError'
+
+  /rest/v1/rpc/list_instructor_content:
+    post:
+      operationId: listInstructorContent
+      tags: [Instructor]
+      summary: List uploaded content for an instructor-owned section
+      security:
+        - SupabaseApiKey: []
+          BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_section_id]
+              properties:
+                p_section_id:
+                  $ref: '#/components/schemas/Uuid'
+      responses:
+        '200':
+          description: Course content rows
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CourseContent'
+        '401':
+          $ref: '#/components/responses/PostgrestError'
+        '403':
+          $ref: '#/components/responses/PostgrestError'
+
+  /rest/v1/rpc/list_instructor_drafts:
+    post:
+      operationId: listInstructorDrafts
+      tags: [AI Questions]
+      summary: List AI draft questions for an instructor-owned section
+      security:
+        - SupabaseApiKey: []
+          BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [p_section_id]
+              properties:
+                p_section_id:
+                  $ref: '#/components/schemas/Uuid'
+      responses:
+        '200':
+          description: AI draft question rows
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AiDraftQuestion'
+        '401':
+          $ref: '#/components/responses/PostgrestError'
+        '403':
+          $ref: '#/components/responses/PostgrestError'
+
+components:
+  securitySchemes:
+    SupabaseApiKey:
+      type: apiKey
+      in: header
+      name: apikey
+      description: Supabase publishable key. Never use the service-role key in clients.
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Supabase Auth access token for the signed-in user.
+
+  requestBodies:
+    EmptyRpcBody:
+      required: false
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+          examples:
+            empty:
+              value: {}
+
+  responses:
+    Error:
+      description: Edge Function error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    PostgrestError:
+      description: PostgREST error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/PostgrestError'
+
+  schemas:
+    Uuid:
+      type: string
+      format: uuid
+    Role:
+      type: string
+      enum: [alumno, padre, instructor]
+    ErrorCode:
+      type: string
+      example: UNAUTHENTICATED
+    ErrorResponse:
+      type: object
+      required: [error_code]
+      properties:
+        status:
+          type: string
+          example: rejected
+        error_code:
+          $ref: '#/components/schemas/ErrorCode'
+        hint:
+          type: string
+    PostgrestError:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        details:
+          type: string
+          nullable: true
+        hint:
+          type: string
+          nullable: true
+
+    Profile:
+      type: object
+      required: [id, student_id, role, full_name, email]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        student_id:
+          $ref: '#/components/schemas/Uuid'
+        role:
+          $ref: '#/components/schemas/Role'
+        full_name:
+          type: string
+        email:
+          type: string
+          format: email
+        tutor_consent_signed:
+          type: boolean
+
+    RegisterAccountRequest:
+      type: object
+      required: [email, password, fullName, role]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        fullName:
+          type: string
+        role:
+          $ref: '#/components/schemas/Role'
+        classCode:
+          type: string
+          description: Required for `alumno` and `instructor`.
+        studentLinkCode:
+          type: string
+          description: Required for `padre`.
+          example: ABCD-2345
+        acceptConsent:
+          type: boolean
+          description: Required for `padre`.
+        instructorCode:
+          type: string
+          description: Required for `instructor`.
+    RegisterAccountResponse:
+      type: object
+      required: [status, profile]
+      properties:
+        status:
+          type: string
+          enum: [registered]
+        profile:
+          $ref: '#/components/schemas/Profile'
+        student_link_code:
+          type: string
+          nullable: true
+          example: ABCD-2345
+        link_expires_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    RotateLinkCodeResponse:
+      type: object
+      required: [student_link_code, link_expires_at]
+      properties:
+        student_link_code:
+          type: string
+          example: ABCD-2345
+        link_expires_at:
+          type: string
+          format: date-time
+    LinkStudentRequest:
+      type: object
+      required: [studentLinkCode, acceptConsent]
+      properties:
+        studentLinkCode:
+          type: string
+          example: ABCD-2345
+        acceptConsent:
+          type: boolean
+    LinkStudentResponse:
+      type: object
+      required: [status, student_id]
+      properties:
+        status:
+          type: string
+          enum: [linked]
+        student_id:
+          $ref: '#/components/schemas/Uuid'
+
+    IngestResponseRequest:
+      type: object
+      required: [question_id, session_id, raw_answer]
+      properties:
+        question_id:
+          $ref: '#/components/schemas/Uuid'
+        session_id:
+          $ref: '#/components/schemas/Uuid'
+        raw_answer:
+          oneOf:
+            - type: string
+            - type: number
+            - type: boolean
+          example: '5/4'
+    IngestResponseAccepted:
+      type: object
+      required: [status, response_id]
+      properties:
+        status:
+          type: string
+          enum: [accepted]
+        response_id:
+          $ref: '#/components/schemas/Uuid'
+    ReexplainResponseRequest:
+      type: object
+      required: [response_id]
+      properties:
+        response_id:
+          $ref: '#/components/schemas/Uuid'
+    ReexplainResponseAccepted:
+      type: object
+      required: [status, feedback_id, version]
+      properties:
+        status:
+          type: string
+          enum: [accepted]
+        feedback_id:
+          $ref: '#/components/schemas/Uuid'
+        version:
+          type: integer
+          minimum: 1
+
+    IngestCourseContentRequest:
+      type: object
+      required: [section_id, topic, source_type, source_label]
+      properties:
+        section_id:
+          $ref: '#/components/schemas/Uuid'
+        topic:
+          type: string
+        source_type:
+          type: string
+          enum: [text, url, pdf]
+        source_label:
+          type: string
+        raw_text:
+          type: string
+          description: Required when `source_type` is `text`.
+        source_url:
+          type: string
+          format: uri
+          description: Required when `source_type` is `url`.
+        pdf_base64:
+          type: string
+          format: byte
+          description: Required when `source_type` is `pdf`.
+        pdf_mime_type:
+          type: string
+          default: application/pdf
+    IngestCourseContentResponse:
+      type: object
+      required: [status, content_id, chars]
+      properties:
+        status:
+          type: string
+          enum: [ready]
+        content_id:
+          $ref: '#/components/schemas/Uuid'
+        chars:
+          type: integer
+          minimum: 0
+
+    GenerateQuestionsRequest:
+      type: object
+      required: [section_id, topic, difficulty_level, count]
+      properties:
+        section_id:
+          $ref: '#/components/schemas/Uuid'
+        topic:
+          type: string
+        difficulty_level:
+          type: integer
+          minimum: 1
+          maximum: 5
+        count:
+          type: integer
+          minimum: 1
+          maximum: 8
+        provider:
+          type: string
+          enum: [gemini, deepseek]
+          description: Omit to use `LLM_DEFAULT_PROVIDER`.
+        preferred_question_type:
+          type: string
+          enum: [opcion_multiple, texto_libre, mixed]
+          default: mixed
+    GenerateQuestionsResponse:
+      type: object
+      required: [status, provider, model, draft_ids, created, rejected, source_content_ids]
+      properties:
+        status:
+          type: string
+          enum: [drafts_created]
+        provider:
+          type: string
+          enum: [gemini, deepseek]
+        model:
+          type: string
+        draft_ids:
+          type: array
+          items:
+            $ref: '#/components/schemas/Uuid'
+        created:
+          type: integer
+          minimum: 0
+        rejected:
+          type: array
+          items:
+            type: object
+            required: [index, reason]
+            properties:
+              index:
+                type: integer
+              reason:
+                type: string
+        source_content_ids:
+          type: array
+          items:
+            $ref: '#/components/schemas/Uuid'
+
+    ReviewDraftRequest:
+      type: object
+      required: [draft_id, decision]
+      properties:
+        draft_id:
+          $ref: '#/components/schemas/Uuid'
+        decision:
+          type: string
+          enum: [approve, reject]
+        edits:
+          type: object
+          properties:
+            prompt:
+              type: string
+            question_type:
+              type: string
+              enum: [opcion_multiple, texto_libre]
+            options:
+              type: array
+              items:
+                type: string
+            correct_answer:
+              type: string
+            expected_answer_or_rubric:
+              type: string
+            knowledge_tags:
+              type: array
+              items:
+                type: string
+            review_notes:
+              type: string
+        review_notes:
+          type: string
+    ReviewDraftResponse:
+      oneOf:
+        - type: object
+          required: [status, draft_id, question_id]
+          properties:
+            status:
+              type: string
+              enum: [approved]
+            draft_id:
+              $ref: '#/components/schemas/Uuid'
+            question_id:
+              $ref: '#/components/schemas/Uuid'
+            note:
+              type: string
+        - type: object
+          required: [status, draft_id]
+          properties:
+            status:
+              type: string
+              enum: [rejected]
+            draft_id:
+              $ref: '#/components/schemas/Uuid'
+
+    MasteryPoint:
+      type: object
+      required: [topic, mastery]
+      properties:
+        topic:
+          type: string
+        mastery:
+          type: number
+          description: UI percentage, usually 0 to 100.
+    MasteryHistoryPoint:
+      allOf:
+        - $ref: '#/components/schemas/MasteryPoint'
+        - type: object
+          required: [date]
+          properties:
+            date:
+              type: string
+              format: date-time
+    HeatmapDay:
+      type: object
+      required: [date, count]
+      properties:
+        date:
+          type: string
+          format: date
+        count:
+          type: integer
+          minimum: 0
+    StudentDashboard:
+      type: object
+      required:
+        - studentId
+        - studentName
+        - consentSigned
+        - currentQuestion
+        - masteryByTopic
+        - history
+        - activity
+        - answeredCount
+        - correctCount
+        - streakDays
+      properties:
+        studentId:
+          $ref: '#/components/schemas/Uuid'
+        studentName:
+          type: string
+        consentSigned:
+          type: boolean
+        currentQuestion:
+          type: object
+          allOf:
+            - $ref: '#/components/schemas/CurrentQuestion'
+          nullable: true
+        masteryByTopic:
+          type: array
+          items:
+            $ref: '#/components/schemas/MasteryPoint'
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/MasteryHistoryPoint'
+        activity:
+          type: array
+          items:
+            $ref: '#/components/schemas/HeatmapDay'
+        answeredCount:
+          type: integer
+        correctCount:
+          type: integer
+        streakDays:
+          type: integer
+    CurrentQuestion:
+      type: object
+      required: [id, text, type, options, topic, difficultyLevel]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        text:
+          type: string
+        type:
+          type: string
+          enum: [opcion_multiple, texto_libre]
+        options:
+          type: array
+          nullable: true
+          items:
+            type: string
+        topic:
+          type: string
+        difficultyLevel:
+          type: integer
+          minimum: 1
+          maximum: 5
+
+    ParentDashboard:
+      type: object
+      required: [children]
+      properties:
+        children:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParentChild'
+    ParentChild:
+      type: object
+      required: [id, name, lastActivityDate, mastery, history, activity, strengths, suggestedCareers]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        name:
+          type: string
+        lastActivityDate:
+          type: string
+          format: date-time
+          nullable: true
+        mastery:
+          type: array
+          items:
+            allOf:
+              - $ref: '#/components/schemas/MasteryPoint'
+              - type: object
+                properties:
+                  alert:
+                    type: boolean
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/MasteryHistoryPoint'
+        activity:
+          type: array
+          items:
+            $ref: '#/components/schemas/HeatmapDay'
+        strengths:
+          type: array
+          items:
+            $ref: '#/components/schemas/MasteryPoint'
+        suggestedCareers:
+          type: array
+          items:
+            $ref: '#/components/schemas/SuggestedCareer'
+    SuggestedCareer:
+      type: object
+      required: [id, name, cluster, description, score]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        name:
+          type: string
+        cluster:
+          type: string
+          enum: [ingenieria, tecnologia, arquitectura, salud, economia, ciencias, arte-diseno, educacion]
+        description:
+          type: string
+        score:
+          type: number
+
+    InstructorAnalytics:
+      type: object
+      required: [sections, rows, trend]
+      properties:
+        sections:
+          type: array
+          items:
+            type: object
+            required: [id, name]
+            properties:
+              id:
+                $ref: '#/components/schemas/Uuid'
+              name:
+                type: string
+        rows:
+          type: array
+          items:
+            $ref: '#/components/schemas/InstructorRow'
+        trend:
+          type: array
+          items:
+            type: object
+            required: [week, average]
+            properties:
+              week:
+                type: string
+                format: date
+              average:
+                type: number
+    InstructorRow:
+      type: object
+      required: [studentId, studentAlias, topic, mastery, lastActivity]
+      properties:
+        studentId:
+          $ref: '#/components/schemas/Uuid'
+        studentAlias:
+          type: string
+        topic:
+          type: string
+        mastery:
+          type: number
+        lastActivity:
+          type: string
+          format: date-time
+
+    CourseContent:
+      type: object
+      required: [id, topic, source_type, source_label, extracted_status, created_at]
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        topic:
+          type: string
+        source_type:
+          type: string
+          enum: [text, url, pdf]
+        source_label:
+          type: string
+        raw_text:
+          type: string
+          nullable: true
+          description: Returned only to the instructor owner context.
+        extracted_status:
+          type: string
+          enum: [pending, processing, ready, failed]
+        extracted_error:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        processed_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    AiDraftQuestion:
+      type: object
+      required:
+        - id
+        - topic
+        - difficulty_level
+        - prompt
+        - question_type
+        - options
+        - correct_answer
+        - expected_answer_or_rubric
+        - knowledge_tags
+        - source_content_ids
+        - generation_provider
+        - generation_model
+        - status
+        - created_at
+      properties:
+        id:
+          $ref: '#/components/schemas/Uuid'
+        topic:
+          type: string
+        difficulty_level:
+          type: integer
+          minimum: 1
+          maximum: 5
+        prompt:
+          type: string
+        question_type:
+          type: string
+          enum: [opcion_multiple, texto_libre]
+        options:
+          type: array
+          nullable: true
+          items:
+            type: string
+        correct_answer:
+          type: string
+        expected_answer_or_rubric:
+          type: string
+        knowledge_tags:
+          type: array
+          items:
+            type: string
+        source_content_ids:
+          type: array
+          items:
+            $ref: '#/components/schemas/Uuid'
+        generation_provider:
+          type: string
+          enum: [gemini, deepseek]
+        generation_model:
+          type: string
+        status:
+          type: string
+          enum: [draft, approved, rejected]
+        reviewer_id:
+          type: string
+          format: uuid
+          nullable: true
+        reviewed_at:
+          type: string
+          format: date-time
+          nullable: true
+        review_notes:
+          type: string
+          nullable: true
+        created_question_id:
+          type: string
+          format: uuid
+          nullable: true
+        created_at:
+          type: string
+          format: date-time

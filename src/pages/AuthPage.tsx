@@ -1,7 +1,7 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { Navigate } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
-import { LoopMascot } from '../components/shared/LoopMascot';
+import { LoopLogo } from '../components/shared/LoopLogo';
 import { toast } from 'sonner';
 import { Button } from '../components/ui/Button';
 import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/Card';
@@ -60,9 +60,9 @@ export function AuthPage() {
     >
       <Card className="loop-fade-up w-full max-w-md rounded-2xl border border-[#56358C] bg-[#162E84]/85 backdrop-blur">
         <CardHeader className="text-center">
-          <div className="mx-auto mb-3 loop-neon-pulse rounded-full">
-            <LoopMascot size={64} mood="idle" />
-          </div>
+          <LoopLogo
+            className={`mx-auto mb-3 ${mode === 'login' ? 'loop-login-logo w-64 sm:w-72' : 'w-48'}`}
+          />
           <div className="text-[10px] font-bold uppercase tracking-[0.32em] text-[#9CFF0F]">
             Loop · aprende en bucle
           </div>
