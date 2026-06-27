@@ -293,11 +293,33 @@ paths:
       operationId: getStudentDashboard
       tags: [Dashboards]
       summary: Load the signed-in student dashboard snapshot
+      description: |
+        When `p_topic` is provided, the RPC first tries to choose an active
+        question from that catalog topic. `p_question_pref` can restrict the
+        question type for the demo challenge setup.
       security:
         - SupabaseApiKey: []
           BearerAuth: []
       requestBody:
-        $ref: '#/components/requestBodies/EmptyRpcBody'
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                p_topic:
+                  type: string
+                  nullable: true
+                  example: Fracciones y decimales
+                p_question_pref:
+                  type: string
+                  enum: [multiple, open, mix]
+                  default: mix
+            examples:
+              selectedTopic:
+                value:
+                  p_topic: Fracciones y decimales
+                  p_question_pref: mix
       responses:
         '200':
           description: Student dashboard data

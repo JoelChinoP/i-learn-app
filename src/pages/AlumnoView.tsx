@@ -118,13 +118,16 @@ export function AlumnoView() {
 
   const loadDashboard = useCallback(async () => {
     setError(null);
-    const { data, error: rpcError } = await supabase.rpc('get_student_dashboard');
+    const { data, error: rpcError } = await supabase.rpc('get_student_dashboard', {
+      p_topic: setup?.topicLabel ?? null,
+      p_question_pref: setup?.questionPref ?? 'mix',
+    });
     if (rpcError) throw rpcError;
     const next = data as StudentDashboard;
     dashboardCache.set(cacheKey, next);
     setDashboard(next);
     setLeaderboardOptIn(next.leaderboardOptIn);
-  }, [cacheKey]);
+  }, [cacheKey, setup?.questionPref, setup?.topicLabel]);
 
   useEffect(() => {
     let active = true;
@@ -749,6 +752,14 @@ export function AlumnoView() {
             setSetup(value);
             setShowSetup(false);
             setEvalStats({ answered: 0, correct: 0 });
+            setSelected('');
+            setFreeText('');
+            setAudio(null);
+            setFeedback(null);
+            setPhase('question');
+            activeResponseId.current = null;
+            clearFeedbackPolling();
+            stopProcessing();
           }}
         />
       )}

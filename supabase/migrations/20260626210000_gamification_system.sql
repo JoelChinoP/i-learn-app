@@ -117,6 +117,7 @@ create table if not exists public.achievement_defs (
   rule jsonb not null,
   xp_reward int not null default 0,
   active boolean not null default true,
+  sort_order int not null default 0,
   created_at timestamptz not null default now()
 );
 
