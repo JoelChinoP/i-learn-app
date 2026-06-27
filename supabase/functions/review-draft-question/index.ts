@@ -78,8 +78,22 @@ Deno.serve(async (req) => {
     });
   } catch (error) {
     const code = errorCode(error);
+    // console.error queda visible en Dashboard → Edge Functions → Logs.
+    // Es la única forma de ver el mensaje crudo cuando el error viene de
+    // Postgres (FK, check constraint, etc.) que no sigue el patrón UPPER_SNAKE.
+    console.error('review-draft-question error', {
+      code,
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    const body: Record<string, unknown> = { error_code: code };
+    if (code === 'INTERNAL_ERROR') {
+      // Solo en errores no clasificados exponemos el mensaje crudo para
+      // acelerar el debug. Quitar cuando esté estable.
+      body.debug_message = error instanceof Error ? error.message : String(error);
+    }
     return json(
-      { error_code: code },
+      body,
       code === 'UNAUTHENTICATED' ? 401 : code === 'ROLE_FORBIDDEN' ? 403 : 422
     );
   }
