@@ -2,12 +2,11 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } f
 import { Link } from 'react-router-dom';
 import { RefreshCw, RotateCcw, Share2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { ActivityHeatmap } from '../components/shared/ActivityHeatmap';
 import { EmptyState } from '../components/shared/EmptyState';
-import { MasteryBar } from '../components/shared/MasteryBar';
-import { TrendChart } from '../components/shared/TrendChart';
 import { LoopLoader, LoopMascot } from '../components/shared/LoopMascot';
 import { GamificationPanel } from '../components/alumno/GamificationPanel';
+import { AchievementsShowcase } from '../components/alumno/AchievementsShowcase';
+import { AnalyticsShowcase } from '../components/alumno/AnalyticsShowcase';
 import { AudioRecorder } from '../components/alumno/AudioRecorder';
 import { SessionSetup, type SessionSetupValue } from '../components/alumno/SessionSetup';
 import { DailyMissionsCard } from '../components/alumno/DailyMissionsCard';
@@ -704,16 +703,9 @@ export function AlumnoView() {
 
         </section>
 
-        {/* SIDE RAIL — desktop side panel, mobile stacks below */}
-        <aside className="flex flex-col gap-4 lg:sticky lg:top-20 lg:self-start">
-          <GamificationPanel
-            dashboard={{
-              xp: dashboard.xp,
-              streakDays: dashboard.streakDays,
-              achievements: dashboard.achievements,
-            }}
-          />
-
+        {/* SIDE RAIL — desktop side panel, mobile stacks below.
+            Order: missions (action) → leaderboard (social) → XP/streak (progress) → colapsables. */}
+        <aside className="flex flex-col gap-2.5 lg:sticky lg:top-20 lg:self-start">
           <DailyMissionsCard
             daily={dashboard.missions.daily}
             weekly={dashboard.missions.weekly}
@@ -729,42 +721,23 @@ export function AlumnoView() {
             onOptInChange={setLeaderboardOptIn}
           />
 
-          <Card className="rounded-2xl border border-[#56358C] bg-[#0d0d0d]">
-            <CardHeader>
-              <CardTitle className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#9CFF0F]">
-                Dominio por tema
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {dashboard.masteryByTopic.map((item) => (
-                <MasteryBar key={item.topic} topic={item.topic} mastery={item.mastery} />
-              ))}
-            </CardContent>
-          </Card>
+          <GamificationPanel
+            dashboard={{
+              xp: dashboard.xp,
+              streakDays: dashboard.streakDays,
+            }}
+          />
 
-          <Card className="rounded-2xl border border-[#56358C] bg-[#0d0d0d]">
-            <CardHeader>
-              <CardTitle className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#9CFF0F]">
-                Actividad reciente
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ActivityHeatmap days={dashboard.activity} />
-            </CardContent>
-          </Card>
+          <AchievementsShowcase
+            earned={dashboard.achievements.earned}
+            locked={dashboard.achievements.locked}
+          />
 
-          {dashboard.history.length > 0 && (
-            <Card className="rounded-2xl border border-[#56358C] bg-[#0d0d0d]">
-              <CardHeader>
-                <CardTitle className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-[#9CFF0F]">
-                  Progreso
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <TrendChart data={dashboard.history} />
-              </CardContent>
-            </Card>
-          )}
+          <AnalyticsShowcase
+            masteryByTopic={dashboard.masteryByTopic}
+            activity={dashboard.activity}
+            history={dashboard.history}
+          />
 
           <div className="pt-1 text-center text-[10px] uppercase tracking-[0.32em] text-white/25">
             {dashboard.streakDays} día(s) activo · {dashboard.answeredCount} respuestas

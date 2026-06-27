@@ -42,7 +42,7 @@ function MissionRow({
   const isClaimable = mission.completed && !mission.claimed;
   return (
     <div
-      className="rounded-xl border p-3 transition"
+      className="rounded-xl border p-2.5 transition"
       style={{
         background: mission.claimed
           ? 'rgba(56,18,59,0.35)'
@@ -54,28 +54,28 @@ function MissionRow({
         opacity: mission.claimed ? 0.7 : 1,
       }}
     >
-      <div className="mb-1.5 flex items-start justify-between gap-2">
+      <div className="mb-1 flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             <Target
-              className="size-3.5 shrink-0"
+              className="size-3 shrink-0"
               style={{ color: isClaimable ? '#9CFF0F' : 'rgba(255,255,255,0.45)' }}
             />
             <span
-              className="truncate text-[14px] leading-tight tracking-[0.04em] text-white"
+              className="truncate text-[13px] leading-tight tracking-[0.04em] text-white"
               style={DISPLAY}
             >
               {mission.title.toUpperCase()}
             </span>
           </div>
-          <p className="mt-0.5 truncate text-[10.5px] text-white/55">{mission.hint}</p>
+          <p className="mt-0.5 truncate text-[10px] text-white/50">{mission.hint}</p>
         </div>
         <span className="shrink-0 rounded-full bg-black/50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em] text-[#9CFF0F]">
-          +{mission.xp_reward} XP
+          +{mission.xp_reward}
         </span>
       </div>
-      <div className="mt-1.5 flex items-center gap-2">
-        <div className="h-[4px] flex-1 overflow-hidden rounded-full bg-black/60">
+      <div className="mt-1 flex items-center gap-2">
+        <div className="h-[3px] flex-1 overflow-hidden rounded-full bg-black/60">
           <div
             className="h-full rounded-full transition-[width] duration-500"
             style={{
@@ -94,7 +94,7 @@ function MissionRow({
             type="button"
             onClick={handleClaim}
             disabled={busy}
-            className="loop-neon-pulse shrink-0 rounded-full bg-[#9CFF0F] px-2.5 py-1 text-[9px] font-extrabold uppercase tracking-[0.18em] text-black disabled:opacity-60"
+            className="loop-neon-pulse shrink-0 rounded-full bg-[#9CFF0F] px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-[0.18em] text-black disabled:opacity-60"
           >
             {busy ? '…' : 'Reclamar'}
           </button>
@@ -119,8 +119,8 @@ export function DailyMissionsCard({ daily, weekly, onClaimed }: DailyMissionsCar
   const claim = (m: MissionProgress) => onClaimed?.(m, m.xp_reward);
 
   return (
-    <section className="rounded-2xl border border-[#56358C] bg-[#0d0d0d] p-4">
-      <div className="mb-3 flex items-center justify-between">
+    <section className="rounded-2xl border border-[#56358C] bg-[#0d0d0d] p-3.5">
+      <div className="mb-2.5 flex items-center justify-between">
         <div className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase tracking-[0.22em] text-[#9CFF0F]">
           <Sparkles className="size-3.5" /> Misiones
         </div>
@@ -129,7 +129,7 @@ export function DailyMissionsCard({ daily, weekly, onClaimed }: DailyMissionsCar
         </div>
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <div className="text-[9px] font-extrabold uppercase tracking-[0.22em] text-white/40">
           Diarias
         </div>
@@ -141,7 +141,7 @@ export function DailyMissionsCard({ daily, weekly, onClaimed }: DailyMissionsCar
       </div>
 
       {weeklyShown.length > 0 && (
-        <div className="mt-4 space-y-2">
+        <div className="mt-3 space-y-1.5">
           <div className="text-[9px] font-extrabold uppercase tracking-[0.22em] text-white/40">
             Semanales
           </div>

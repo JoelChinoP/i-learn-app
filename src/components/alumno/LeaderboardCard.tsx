@@ -23,7 +23,7 @@ function RowHighlight({ entry, isMe }: { entry: LeaderboardEntry; isMe: boolean 
   const medal = entry.rank === 1 ? '🥇' : entry.rank === 2 ? '🥈' : entry.rank === 3 ? '🥉' : null;
   return (
     <div
-      className="flex items-center gap-2.5 rounded-xl border px-3 py-2"
+      className="flex items-center gap-2 rounded-lg border px-2.5 py-1.5"
       style={{
         background: isMe
           ? 'linear-gradient(135deg,#162E84,#38123B)'
@@ -35,7 +35,7 @@ function RowHighlight({ entry, isMe }: { entry: LeaderboardEntry; isMe: boolean 
       }}
     >
       <div
-        className="flex w-7 shrink-0 items-center justify-center text-[14px] tabular-nums"
+        className="flex w-6 shrink-0 items-center justify-center text-[13px] tabular-nums"
         style={{ ...DISPLAY, color: podium ? '#9CFF0F' : 'rgba(255,255,255,0.55)' }}
         aria-label={`Posición ${entry.rank}`}
       >
@@ -43,16 +43,13 @@ function RowHighlight({ entry, isMe }: { entry: LeaderboardEntry; isMe: boolean 
       </div>
       <div className="min-w-0 flex-1">
         <div
-          className="truncate text-[13px] tracking-[0.04em] text-white"
+          className="truncate text-[12px] tracking-[0.04em] text-white"
           style={DISPLAY}
         >
           {entry.alias.toUpperCase()}
         </div>
-        <div className="text-[10px] text-white/40">
-          #{entry.rank} · total {entry.total_xp} XP
-        </div>
       </div>
-      <div className="shrink-0 text-right text-[12px] font-bold tabular-nums text-[#9CFF0F]" style={DISPLAY}>
+      <div className="shrink-0 text-right text-[11px] font-bold tabular-nums text-[#9CFF0F]" style={DISPLAY}>
         {relativeXp(entry.window_xp, entry.total_xp, 'weekly')}
       </div>
     </div>
@@ -114,7 +111,7 @@ export function LeaderboardCard({ studentId, optIn, onOptInChange }: Leaderboard
 
   return (
     <Card className="rounded-2xl border border-[#56358C] bg-[#0d0d0d]">
-      <CardHeader>
+      <CardHeader className="p-3.5 pb-2">
         <CardTitle className="flex items-center justify-between text-[10px] font-extrabold uppercase tracking-[0.22em] text-[#9CFF0F]">
           <span className="flex items-center gap-1.5">
             <Trophy className="size-3.5" /> Leaderboard · tu sección
@@ -123,14 +120,14 @@ export function LeaderboardCard({ studentId, optIn, onOptInChange }: Leaderboard
             type="button"
             onClick={toggle}
             disabled={toggling}
-            className="flex items-center gap-1 rounded-full border border-[#56358C] bg-black/40 px-2 py-1 text-[9px] font-bold uppercase tracking-[0.16em] text-white/70 transition hover:text-white disabled:opacity-50"
+            className="flex items-center gap-1 rounded-full border border-[#56358C] bg-black/40 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em] text-white/70 transition hover:text-white disabled:opacity-50"
           >
             {optIn ? <Eye className="size-3" /> : <EyeOff className="size-3" />}
             {optIn ? 'Visible' : 'Oculto'}
           </button>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-3">
+      <CardContent className="space-y-2 p-3.5 pt-0">
         {!optIn ? (
           <div className="rounded-xl border border-dashed border-[#56358C] bg-black/30 p-4 text-center text-[11px] text-white/55">
             <EyeOff className="mx-auto mb-1.5 size-4 text-white/40" />
